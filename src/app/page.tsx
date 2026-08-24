@@ -216,9 +216,9 @@ export default function Home() {
               <Link
                 key={m.slug}
                 href={`/products?category=${m.slug}`}
-                className={`group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow animate-slide-up delay-${i + 1}`}
+                className={`group block bg-white border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow animate-slide-up delay-${i + 1}`}
               >
-                <div className="aspect-square overflow-hidden bg-gray-50">
+                <div className="h-[140px] overflow-hidden bg-gray-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={m.image}
