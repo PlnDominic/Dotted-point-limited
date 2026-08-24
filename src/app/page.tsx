@@ -62,8 +62,6 @@ const services = [
   { name: "Plasterboard Ceiling", slug: "plasterboard-ceiling", image: "/images/services/plasterboard-ceiling.jpg", desc: "Suspended and plasterboard ceilings with clean, modern finishes.", cta: "View Service" },
   { name: "Painting & Decoration", slug: "painting-decoration", image: "/images/services/painting-decoration.jpg", desc: "Interior and exterior painting, finishing and decoration.", cta: "View Service" },
   { name: "Kitchen Cabinets", slug: "kitchen-cabinets", image: "/images/services/kitchen-cabinets.jpg", desc: "Bespoke fitted kitchen cabinets built to your space.", cta: "View Service" },
-  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale.", cta: "Shop Now" },
-  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale, supplied & fitted.", cta: "Shop Now" },
 ];
 
 const buildingMaterials = [
@@ -75,6 +73,10 @@ const buildingMaterials = [
   { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.jpg", desc: "Ceramic & porcelain floor tiles, adhesive and grout." },
   { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage." },
   { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories." },
+  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale." },
+  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale." },
+  { name: "Water Tanks", slug: "water-tanks", image: "/images/materials/water-tanks.jpg", desc: "Polytanks and water storage tanks for homes & sites." },
+  { name: "Switches & Sockets", slug: "switches-sockets", image: "/images/materials/switches-sockets.jpg", desc: "Wall switches, sockets and electrical accessories." },
 ];
 
 const capabilities = [
@@ -271,7 +273,7 @@ export default function Home() {
             finish — supplied and delivered.
           </p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
           {buildingMaterials.map((m, i) => (
             <Link
               key={m.slug}
@@ -281,13 +283,13 @@ export default function Home() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.image} alt={m.name} className="w-full h-full object-cover" />
               <div className="overlay" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="font-[var(--font-heading)] text-[14px] font-bold text-white mb-0.5 leading-tight">
+              <div className="absolute bottom-2.5 left-2.5 right-2.5">
+                <h3 className="font-[var(--font-heading)] text-[11px] sm:text-[12px] font-bold text-white mb-0.5 leading-tight">
                   {m.name}
                 </h3>
-                <span className="text-[12px] font-medium text-white/80 flex items-center gap-1">
+                <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
                   Shop Now
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
                   </svg>
