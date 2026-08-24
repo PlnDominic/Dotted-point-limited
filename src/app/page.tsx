@@ -144,7 +144,7 @@ export default function Home() {
         <div className="max-w-[1300px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
           <Link
             href="/products"
-            className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap rounded-full bg-[#171717] text-white shrink-0 hover:opacity-90 transition-opacity"
+            className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap bg-[#171717] text-white shrink-0 hover:opacity-90 transition-opacity"
           >
             All
           </Link>
@@ -152,7 +152,7 @@ export default function Home() {
             <Link
               key={c.slug}
               href={`/products?category=${c.slug}`}
-              className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717] transition-colors shrink-0"
+              className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717] transition-colors shrink-0"
             >
               {c.label}
             </Link>
