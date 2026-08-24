@@ -4,13 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 
 /* ─── Data ─── */
-const heroStats = [
-  { value: "10+", label: "Years Experience" },
-  { value: "500+", label: "Projects Completed" },
-  { value: "100%", label: "Licensed & Insured" },
-  { value: "24/7", label: "Site Support" },
-];
-
 const trustItems = [
   {
     title: "Licensed & Insured",
@@ -128,75 +121,39 @@ export default function Home() {
     <div>
       {/* ═══════ HERO ═══════ */}
       <section className="relative bg-[#f6f6f6] overflow-hidden">
-        <div className="max-w-[1300px] mx-auto px-6 grid lg:grid-cols-2 gap-10 items-center py-14 lg:py-0 lg:min-h-[600px]">
-          {/* Left — Text */}
-          <div className="relative z-10 animate-slide-up">
-            <span className="eyebrow uppercase">Proudly Ghanaian · Accra, Ghana</span>
-            <h1 className="font-[var(--font-heading)] text-[38px] sm:text-[48px] lg:text-[54px] font-[800] leading-[1.08] tracking-[-0.02em] text-[#171717] mt-4 mb-5">
-              We Build. We Fabricate.
-              <br />
-              We Finish.
-            </h1>
-            <p className="text-gray-500 text-[16px] leading-relaxed mb-8 max-w-[440px]">
-              A full-service Ghanaian building, fabrication and interior
-              finishing company — plus everything to construct an entire
-              building: cement, blocks, roofing sheets, kitchen sinks, WC,
-              baths, taps and more, backed by expert consulting.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-10">
-              <Link href="/products" className="btn-primary">
-                Get a Free Quote
-              </Link>
-              <Link href="/products" className="btn-outline">
-                View Our Services
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-4 max-w-[420px]">
-              {heroStats.map((s) => (
-                <div key={s.label}>
-                  <p className="font-[var(--font-heading)] text-[18px] sm:text-[20px] font-[800] text-[#171717]">
-                    {s.value}
-                  </p>
-                  <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
-                    {s.label}
-                  </p>
-                </div>
-              ))}
-            </div>
+        <div className="max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.1fr_1fr] items-center lg:h-[380px]">
+          {/* Left — Product image */}
+          <div className="flex items-center justify-center px-8 py-8 lg:py-0 order-2 lg:order-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/services/automated-gates.jpg"
+              alt="Automated gate installation"
+              className="w-full max-w-[280px] aspect-square object-cover rounded-2xl shadow-xl animate-scale-in"
+            />
           </div>
 
-          {/* Right — Image + floating cards */}
-          <div className="relative flex items-center justify-center py-8 lg:py-16">
-            <div className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-[40%] bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-dark)] opacity-90" />
-            <div className="relative w-full max-w-[460px] aspect-[4/3] animate-scale-in">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/services/hero-building.jpg"
-                alt="Our fabrication and building team at work"
-                className="w-full h-full object-cover rounded-3xl shadow-2xl"
-              />
-            </div>
+          {/* Center — Text */}
+          <div className="text-center px-6 py-8 lg:py-0 order-1 lg:order-2 animate-slide-up">
+            <h1 className="font-[var(--font-heading)] text-[28px] sm:text-[34px] font-[800] tracking-tight leading-[1.15] text-[#171717] mb-3 uppercase">
+              Building &amp; Fabrication
+            </h1>
+            <p className="text-gray-500 text-[14px] leading-relaxed mb-6 max-w-[320px] mx-auto">
+              Gates, roofing sheets, kitchen cabinets &amp; every material to
+              build your home
+            </p>
+            <Link href="/products" className="btn-dark">
+              Shop Now
+            </Link>
+          </div>
 
-            {/* Floating chips */}
-            <div className="floating-chip absolute top-4 left-0 sm:-left-6 animate-float">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/services/automated-gates.jpg" alt="Automated Gates" className="w-10 h-10 rounded-lg object-cover" />
-              <div>
-                <p className="text-[11px] font-semibold text-[#171717] leading-tight">Automated Gates</p>
-                <p className="text-[11px] text-gray-400">Installed & serviced</p>
-              </div>
-            </div>
-
-            <div className="floating-chip absolute bottom-8 right-0 sm:-right-6 animate-float delay-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/services/kitchen-cabinets.jpg" alt="Kitchen Cabinets" className="w-10 h-10 rounded-lg object-cover" />
-              <div>
-                <p className="text-[11px] font-semibold text-[#171717] leading-tight">Kitchen Cabinets</p>
-                <p className="text-[11px] text-gray-400">Built to your space</p>
-              </div>
-            </div>
+          {/* Right — Portrait image */}
+          <div className="relative order-3 h-[220px] lg:h-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/services/hero-building.jpg"
+              alt="Our building and fabrication team at work in Ghana"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>
