@@ -7,12 +7,6 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-const announcements = [
-  "Free Site Consultation",
-  "Licensed & Insured Tradesmen",
-  "We Build · We Fabricate · We Finish",
-];
-
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,20 +49,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div className="bg-[#171717] text-white text-center py-2.5 px-4">
-        <div className="max-w-[1300px] mx-auto flex items-center justify-center gap-3 text-[12px] font-medium tracking-[0.01em]">
-          {announcements.map((item, i) => (
-            <span key={item} className="flex items-center gap-3">
-              <span className="opacity-90">{item}</span>
-              {i < announcements.length - 1 && (
-                <span className="w-1 h-1 rounded-full bg-white/30 hidden sm:inline-block" />
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* Navbar */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <nav className="max-w-[1300px] mx-auto px-6 flex items-center justify-between h-[72px]">
