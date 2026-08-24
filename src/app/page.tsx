@@ -233,7 +233,7 @@ export default function Home() {
             </svg>
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
           {services.map((s, i) => (
             <Link
               key={s.slug}
@@ -243,13 +243,13 @@ export default function Home() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
               <div className="overlay" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="font-[var(--font-heading)] text-[14px] font-bold text-white mb-0.5 leading-tight">
+              <div className="absolute bottom-2.5 left-2.5 right-2.5">
+                <h3 className="font-[var(--font-heading)] text-[11px] sm:text-[12px] font-bold text-white mb-0.5 leading-tight">
                   {s.name}
                 </h3>
-                <span className="text-[12px] font-medium text-white/80 flex items-center gap-1">
+                <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
                   {s.cta}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
                   </svg>
