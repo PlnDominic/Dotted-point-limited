@@ -218,7 +218,7 @@ export default function Home() {
                 href={`/products?category=${m.slug}`}
                 className={`group block bg-white border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow animate-slide-up delay-${i + 1}`}
               >
-                <div className="h-[140px] overflow-hidden bg-gray-50">
+                <div className="aspect-square overflow-hidden bg-gray-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={m.image}
@@ -227,10 +227,10 @@ export default function Home() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-[12.5px] text-[#171717] leading-snug mb-1.5 line-clamp-2 min-h-[32px]">
+                  <h3 className="text-[12.5px] text-[#171717] leading-snug mb-0.5 line-clamp-2 min-h-[32px]">
                     {m.name}
                   </h3>
-                  <div className="flex items-baseline gap-1.5 flex-wrap mb-1">
+                  <div className="flex items-baseline gap-1.5 flex-wrap mb-0.5">
                     <span className="text-[15px] font-bold text-[#171717]">
                       {formatGHS(m.price)}
                     </span>
@@ -238,7 +238,7 @@ export default function Home() {
                       {formatGHS(m.originalPrice)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[10.5px] text-gray-400">
                       {m.sold} sold
                     </span>
