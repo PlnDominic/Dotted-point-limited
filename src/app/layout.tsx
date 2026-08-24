@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "Dotted Point Limited — Building, Fabrication & Interior Finishing",
   description:
     "A Ghanaian building, fabrication and interior finishing company — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: cement, reinforcement steel, concrete blocks, roofing sheets, timber, floor tiles, kitchen sinks, WC, baths, taps and more.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -126,18 +131,18 @@ export default function RootLayout({
               </div>
 
               {/* Newsletter */}
-              <div>
+              <div className="col-span-2 md:col-span-1">
                 <h3 className="font-[var(--font-heading)] text-[12px] font-bold tracking-[0.15em] text-gray-500 uppercase mb-4">
                   Newsletter
                 </h3>
                 <p className="text-[13px] text-gray-400 mb-4 leading-relaxed">
                   Get project tips, completed work and consulting offers.
                 </p>
-                <div className="flex">
+                <div className="flex max-w-sm">
                   <input
                     type="email"
                     placeholder="Enter your email"
-                    className="flex-1 bg-white/10 border border-white/10 rounded-l-md px-4 py-2.5 text-[13px] text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30"
+                    className="flex-1 min-w-0 bg-white/10 border border-white/10 rounded-l-md px-4 py-2.5 text-[13px] text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30"
                   />
                   <button
                     className="bg-[var(--color-brand)] text-white px-4 font-bold text-[14px] hover:bg-[var(--color-brand-dark)] transition-colors rounded-r-md"
