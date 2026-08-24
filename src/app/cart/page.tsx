@@ -64,7 +64,11 @@ export default function CartPage() {
 
       {items.length === 0 ? (
         <div className="text-center py-24">
-          <div className="text-5xl mb-4 opacity-30">🛒</div>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+            <circle cx="8" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+          </svg>
           <h2 className="font-[var(--font-heading)] text-[18px] font-bold mb-2">Cart is Empty</h2>
           <p className="text-gray-400 text-[14px] mb-6">You haven&apos;t added any items yet.</p>
           <Link href="/products" className="btn-dark text-[13px]">Browse Catalog</Link>
@@ -79,7 +83,13 @@ export default function CartPage() {
                   {item.product?.image_url ? (
                     <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center"><span className="text-xl opacity-20">🔨</span></div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-20">
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>
+                    </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">

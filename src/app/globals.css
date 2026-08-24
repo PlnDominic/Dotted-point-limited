@@ -1,10 +1,13 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 /* ─── Design Tokens ─── */
 @theme {
-  --font-heading: "Inter", system-ui, sans-serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --color-brand: #f97316;
+  --color-brand-dark: #ea580c;
+  --color-brand-light: #fff7ed;
 }
 
 /* ─── Base ─── */
@@ -14,7 +17,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-body);
-  color: #1a1a1a;
+  color: #171717;
   background: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -36,9 +39,15 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-fade-in { animation: fadeIn 0.5s ease both; }
 .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-float { animation: floatCard 4s ease-in-out infinite; }
 
 .delay-1 { animation-delay: 0.05s; }
 .delay-2 { animation-delay: 0.1s; }
@@ -50,9 +59,13 @@ body {
 
 /* ─── Focus ─── */
 :focus-visible {
-  outline: 2px solid #e8721a;
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/* ─── Scrollbar hide ─── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ─── Skip link ─── */
 .skip-link {
@@ -61,43 +74,121 @@ body {
   left: 1rem;
   z-index: 10000;
   padding: 0.75rem 1.5rem;
-  background: #1a1a1a;
+  background: #171717;
   color: white;
   font-weight: 600;
   text-decoration: none;
+  border-radius: 8px;
   transition: top 0.2s;
 }
-.skip-link:focus { top: 0; }
+.skip-link:focus { top: 1rem; }
 
 /* ─── Brand logo text ─── */
 .brand-logo { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
 
-/* ─── Category circle ─── */
-.category-circle {
-  width: 100px;
-  height: 100px;
+/* ─── Buttons ─── */
+.btn-primary {
+  background: var(--color-brand);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: 14px 30px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.btn-primary:hover { background: var(--color-brand-dark); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(249,115,22,0.3); }
+
+.btn-outline {
+  background: #fff;
+  color: #171717;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: 14px 30px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 14px;
+}
+.btn-outline:hover { border-color: #171717; background: #fafafa; }
+
+.btn-dark {
+  background: #171717;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: 14px 30px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.btn-dark:hover { background: #000; transform: translateY(-1px); }
+
+/* ─── Section label (eyebrow) ─── */
+.eyebrow {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--color-brand);
+}
+
+/* ─── Trust icon circle ─── */
+.trust-icon {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: #f5f5f5;
+  border: 1.5px solid #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  color: #171717;
+  flex-shrink: 0;
 }
-.category-circle:hover {
-  transform: scale(1.08);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+/* ─── Category card ─── */
+.category-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.category-card:hover { transform: translateY(-4px); }
+.category-card img { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.category-card:hover img { transform: scale(1.08); }
+.category-card .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.05) 55%, transparent 75%);
 }
 
 /* ─── Product card ─── */
 .product-card {
   background: #fff;
   border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  overflow: hidden;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .product-card:hover {
-  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  transform: translateY(-4px);
+  border-color: #f0f0f0;
 }
 
 /* ─── Heart button ─── */
@@ -121,51 +212,71 @@ body {
 .heart-btn:hover { background: #fff0f0; transform: scale(1.1); }
 .heart-btn.active { background: #fee2e2; }
 
-/* ─── Star rating ─── */
-.star { color: #f59e0b; }
-
-/* ─── CTA buttons ─── */
-.btn-dark {
-  background: #1a1a1a;
-  color: #fff;
-  font-family: var(--font-heading);
-  font-weight: 600;
-  padding: 14px 32px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  letter-spacing: 0.01em;
-}
-.btn-dark:hover { background: #333; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-
-.btn-outline {
-  background: transparent;
-  color: #1a1a1a;
-  font-family: var(--font-heading);
-  font-weight: 600;
-  padding: 14px 32px;
-  border: 2px solid #1a1a1a;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  font-size: 14px;
-  letter-spacing: 0.01em;
-}
-.btn-outline:hover { background: #1a1a1a; color: #fff; }
-
-/* ─── Sale badge ─── */
-.sale-badge {
-  background: #1a1a1a;
-  color: #fff;
+/* ─── Tag badge ─── */
+.tag-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 11px;
-  letter-spacing: 0.05em;
-  padding: 8px 16px;
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+.tag-badge.new { background: #171717; }
+.tag-badge.sale { background: var(--color-brand); }
+
+/* ─── Quick add ─── */
+.quick-add-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #171717;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.quick-add-btn:hover { background: var(--color-brand); transform: scale(1.08); }
+
+/* ─── Star rating ─── */
+.star { color: #f59e0b; }
+
+/* ─── Floating product chip (hero) ─── */
+.floating-chip {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Avatar stack ─── */
+.avatar-stack img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  object-fit: cover;
+  margin-left: -10px;
+}
+.avatar-stack img:first-child { margin-left: 0; }
+
+/* ─── Countdown digit ─── */
+.timer-box {
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 58px;
+  text-align: center;
 }

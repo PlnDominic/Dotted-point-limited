@@ -5,9 +5,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Dotted Point — Premium Tools & Building Materials",
+  title: "Dotted Point — Discover Products You'll Love",
   description:
-    "Your destination for professional-grade tools, materials, and supplies. Quality, reliability, and comfort — all in one place.",
+    "Shop the latest trending products curated for modern lifestyles — fashion, electronics, beauty, fitness and more, all in one place.",
 };
 
 export default function RootLayout({
@@ -42,8 +42,8 @@ export default function RootLayout({
                   />
                 </div>
                 <p className="text-gray-400 text-[13px] leading-relaxed mb-5 max-w-[240px]">
-                  Your destination for professional-grade tools and materials.
-                  Quality, reliability, and comfort — all in one place.
+                  Shop the latest trending products curated for modern
+                  lifestyles — all in one place.
                 </p>
                 {/* Social */}
                 <div className="flex gap-3">
@@ -68,7 +68,7 @@ export default function RootLayout({
                   Shop
                 </h3>
                 <ul className="space-y-2.5">
-                  {["All Products", "Power Tools", "Building Materials", "Safety Gear", "Sale"].map(
+                  {["All Products", "Fashion", "Electronics", "Beauty", "Sale"].map(
                     (link) => (
                       <li key={link}>
                         <Link
@@ -137,13 +137,16 @@ export default function RootLayout({
                   <input
                     type="email"
                     placeholder="Enter your email"
-                    className="flex-1 bg-white/10 border border-white/10 px-4 py-2.5 text-[13px] text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30"
+                    className="flex-1 bg-white/10 border border-white/10 rounded-l-md px-4 py-2.5 text-[13px] text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30"
                   />
                   <button
-                    className="bg-white text-[#1a1a1a] px-4 font-bold text-[14px] hover:bg-gray-200 transition-colors"
+                    className="bg-[var(--color-brand)] text-white px-4 font-bold text-[14px] hover:bg-[var(--color-brand-dark)] transition-colors rounded-r-md"
                     aria-label="Subscribe"
                   >
-                    →
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14" />
+                      <path d="m12 5 7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
               </div>

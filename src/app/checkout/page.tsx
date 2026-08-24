@@ -94,7 +94,9 @@ export default function CheckoutPage() {
       <div className="min-h-[70vh] flex items-center justify-center px-6">
         <div className="text-center max-w-md animate-scale-in">
           <div className="w-20 h-20 bg-[var(--color-success)] rounded-none flex items-center justify-center mx-auto mb-8">
-            <span className="text-3xl text-white">✓</span>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
           </div>
           <p className="font-display text-sm tracking-[0.2em] text-[var(--accent)] mb-4">
             Order Confirmed
@@ -128,7 +130,11 @@ export default function CheckoutPage() {
       <div className="min-h-[70vh] flex items-center justify-center px-6">
         <div className="text-center">
           <div className="w-16 h-16 bg-[var(--border-subtle)] rounded-none flex items-center justify-center mx-auto mb-6">
-            <span className="text-2xl">🛒</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+            </svg>
           </div>
           <p className="font-display text-xl tracking-wide mb-2">
             Cart is Empty

@@ -67,7 +67,10 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="max-w-[1300px] mx-auto px-6 py-24 text-center">
-        <div className="text-5xl mb-4 opacity-30">🔍</div>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
         <h1 className="font-[var(--font-heading)] text-[22px] font-bold mb-2">
           Product Not Found
         </h1>
@@ -97,7 +100,11 @@ export default function ProductDetailPage() {
             <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-7xl opacity-15">🔨</span>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-15">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
             </div>
           )}
         </div>
