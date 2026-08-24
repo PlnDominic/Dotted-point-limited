@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "Dotted Point Limited — Building, Fabrication & Interior Finishing",
   description:
-    "We build, we fabricate, we do interiors, building finishing and consulting — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets and more.",
+    "A Ghanaian building, fabrication and interior finishing company — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus kitchen sinks, WC, baths, taps and other sanitary ware for sale.",
 };
 
 export default function RootLayout({
@@ -68,7 +68,7 @@ export default function RootLayout({
                   Services
                 </h3>
                 <ul className="space-y-2.5">
-                  {["Automated Gates", "Roller Shutters", "Iron Mongering", "Plasterboard Ceiling", "Kitchen Cabinets"].map(
+                  {["Automated Gates", "Roller Shutters", "Iron Mongering", "Kitchen Cabinets", "Kitchen Sinks", "Bathroom Fittings"].map(
                     (link) => (
                       <li key={link}>
                         <Link

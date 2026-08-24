@@ -47,6 +47,8 @@ export default function Navbar() {
     { href: "/products?category=plasterboard-ceiling", label: "Plasterboard Ceiling" },
     { href: "/products?category=painting-decoration", label: "Painting & Decoration" },
     { href: "/products?category=kitchen-cabinets", label: "Kitchen Cabinets" },
+    { href: "/products?category=kitchen-sinks", label: "Kitchen Sinks" },
+    { href: "/products?category=bathroom-fittings", label: "Bathroom Fittings" },
   ];
 
   return (

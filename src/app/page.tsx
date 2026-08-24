@@ -56,12 +56,14 @@ const trustItems = [
 ];
 
 const services = [
-  { name: "Automated Gates", slug: "automated-gates", image: "/images/services/automated-gates.jpg", desc: "Motorized swing & sliding gates with remote access control." },
-  { name: "Garage Roller Shutters", slug: "roller-shutters", image: "/images/services/roller-shutters.jpg", desc: "Durable roller shutters for garages, shops and warehouses." },
-  { name: "Iron Mongering", slug: "iron-mongering", image: "/images/services/iron-mongering.jpg", desc: "Custom wrought iron gates, rails, grilles and fabrication." },
-  { name: "Plasterboard Ceiling", slug: "plasterboard-ceiling", image: "/images/services/plasterboard-ceiling.jpg", desc: "Suspended and plasterboard ceilings with clean, modern finishes." },
-  { name: "Painting & Decoration", slug: "painting-decoration", image: "/images/services/painting-decoration.jpg", desc: "Interior and exterior painting, finishing and decoration." },
-  { name: "Kitchen Cabinets", slug: "kitchen-cabinets", image: "/images/services/kitchen-cabinets.jpg", desc: "Bespoke fitted kitchen cabinets built to your space." },
+  { name: "Automated Gates", slug: "automated-gates", image: "/images/services/automated-gates.jpg", desc: "Motorized swing & sliding gates with remote access control.", cta: "View Service" },
+  { name: "Garage Roller Shutters", slug: "roller-shutters", image: "/images/services/roller-shutters.jpg", desc: "Durable roller shutters for garages, shops and warehouses.", cta: "View Service" },
+  { name: "Iron Mongering", slug: "iron-mongering", image: "/images/services/iron-mongering.jpg", desc: "Custom wrought iron gates, rails, grilles and fabrication.", cta: "View Service" },
+  { name: "Plasterboard Ceiling", slug: "plasterboard-ceiling", image: "/images/services/plasterboard-ceiling.jpg", desc: "Suspended and plasterboard ceilings with clean, modern finishes.", cta: "View Service" },
+  { name: "Painting & Decoration", slug: "painting-decoration", image: "/images/services/painting-decoration.jpg", desc: "Interior and exterior painting, finishing and decoration.", cta: "View Service" },
+  { name: "Kitchen Cabinets", slug: "kitchen-cabinets", image: "/images/services/kitchen-cabinets.jpg", desc: "Bespoke fitted kitchen cabinets built to your space.", cta: "View Service" },
+  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale.", cta: "Shop Now" },
+  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale, supplied & fitted.", cta: "Shop Now" },
 ];
 
 const capabilities = [
@@ -116,17 +118,18 @@ export default function Home() {
         <div className="max-w-[1300px] mx-auto px-6 grid lg:grid-cols-2 gap-10 items-center py-14 lg:py-0 lg:min-h-[600px]">
           {/* Left — Text */}
           <div className="relative z-10 animate-slide-up">
-            <span className="eyebrow uppercase">Building · Fabrication · Interior · Finishing</span>
+            <span className="eyebrow uppercase">Proudly Ghanaian · Accra, Ghana</span>
             <h1 className="font-[var(--font-heading)] text-[38px] sm:text-[48px] lg:text-[54px] font-[800] leading-[1.08] tracking-[-0.02em] text-[#171717] mt-4 mb-5">
               We Build. We Fabricate.
               <br />
               We Finish.
             </h1>
             <p className="text-gray-500 text-[16px] leading-relaxed mb-8 max-w-[440px]">
-              A full-service building, fabrication and interior finishing
-              company — automated gates, roller shutters, iron mongering,
-              plasterboard ceilings, painting and decoration, kitchen
-              cabinets and more, backed by expert consulting.
+              A full-service Ghanaian building, fabrication and interior
+              finishing company — automated gates, roller shutters, iron
+              mongering, plasterboard ceilings, painting and decoration,
+              kitchen cabinets, plus kitchen sinks, WC, baths, taps and
+              other sanitary ware for sale, backed by expert consulting.
             </p>
             <div className="flex flex-wrap gap-3 mb-10">
               <Link href="/products" className="btn-primary">
@@ -207,20 +210,20 @@ export default function Home() {
       <section className="max-w-[1300px] mx-auto px-6 py-14 md:py-16">
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717]">
-            Our Services
+            Our Services & Supplies
           </h2>
           <Link
             href="/products"
             className="text-[13px] font-semibold text-gray-500 hover:text-[#171717] transition-colors hidden sm:flex items-center gap-1"
           >
-            View All Services
+            View All
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
             </svg>
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {services.map((s, i) => (
             <Link
               key={s.slug}
@@ -235,7 +238,7 @@ export default function Home() {
                   {s.name}
                 </h3>
                 <span className="text-[12px] font-medium text-white/80 flex items-center gap-1">
-                  View Service
+                  {s.cta}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
