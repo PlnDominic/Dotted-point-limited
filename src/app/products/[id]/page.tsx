@@ -118,7 +118,7 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
 
-          <p className="font-[var(--font-heading)] text-[28px] font-[800] text-[#e8721a] mb-6">
+          <p className="font-[var(--font-heading)] text-[28px] font-[800] text-[var(--color-brand)] mb-6">
             ${product.price.toFixed(2)}
           </p>
 

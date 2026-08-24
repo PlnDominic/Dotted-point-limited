@@ -5,9 +5,9 @@
 @theme {
   --font-heading: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
-  --color-brand: #f97316;
-  --color-brand-dark: #ea580c;
-  --color-brand-light: #fff7ed;
+  --color-brand: #ff9503;
+  --color-brand-dark: #d97b00;
+  --color-brand-light: #fff4e5;
 }
 
 /* ─── Base ─── */

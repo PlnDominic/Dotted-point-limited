@@ -187,7 +187,7 @@ export default function Home() {
 
           {/* Right — Image + floating cards */}
           <div className="relative flex items-center justify-center py-8 lg:py-16">
-            <div className="absolute w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] rounded-[40%] bg-gradient-to-br from-[#f97316] to-[#ef4444] opacity-90" />
+            <div className="absolute w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] rounded-[40%] bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-dark)] opacity-90" />
             <div className="relative w-[280px] sm:w-[340px] aspect-[3/4] animate-scale-in">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -435,7 +435,7 @@ export default function Home() {
       <section className="max-w-[1300px] mx-auto px-6 py-6 md:py-10">
         <div className="grid md:grid-cols-2 gap-5">
           {/* Flash Sale */}
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#f97316] to-[#ea580c] p-8 md:p-10 flex flex-col justify-center min-h-[280px]">
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-dark)] p-8 md:p-10 flex flex-col justify-center min-h-[280px]">
             <span className="text-white/80 text-[12px] font-semibold uppercase tracking-[0.1em] mb-2">
               Flash Sale
             </span>
@@ -460,7 +460,7 @@ export default function Home() {
             </div>
             <Link
               href="/products"
-              className="inline-flex items-center justify-center bg-white text-[#ea580c] font-[var(--font-heading)] font-bold text-[13px] px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors w-fit"
+              className="inline-flex items-center justify-center bg-white text-[var(--color-brand-dark)] font-[var(--font-heading)] font-bold text-[13px] px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors w-fit"
             >
               Shop Sale Now
             </Link>
