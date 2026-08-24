@@ -120,41 +120,29 @@ export default function Home() {
   return (
     <div>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative bg-[#f6f6f6] overflow-hidden">
-        <div className="max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.1fr_1fr] items-center lg:h-[380px]">
-          {/* Left — Product image */}
-          <div className="flex items-center justify-center px-8 py-8 lg:py-0 order-2 lg:order-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/services/automated-gates.jpg"
-              alt="Automated gate installation"
-              className="w-full max-w-[280px] aspect-square object-cover rounded-2xl shadow-xl animate-scale-in"
-            />
-          </div>
+      <section className="relative overflow-hidden h-[420px] lg:h-[560px]">
+        {/* Full-bleed background image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/services/hero-main.png"
+          alt="Modern two-storey house with automated gate and driveway"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Darken for text legibility */}
+        <div className="absolute inset-0 bg-black/40" />
 
-          {/* Center — Text */}
-          <div className="text-center px-6 py-8 lg:py-0 order-1 lg:order-2 animate-slide-up">
-            <h1 className="font-[var(--font-heading)] text-[28px] sm:text-[34px] font-[800] tracking-tight leading-[1.15] text-[#171717] mb-3 uppercase">
-              Building &amp; Fabrication
-            </h1>
-            <p className="text-gray-500 text-[14px] leading-relaxed mb-6 max-w-[320px] mx-auto">
-              Gates, roofing sheets, kitchen cabinets &amp; every material to
-              build your home
-            </p>
-            <Link href="/products" className="btn-dark">
-              Shop Now
-            </Link>
-          </div>
-
-          {/* Right — Main hero image */}
-          <div className="relative order-3 h-[220px] lg:h-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/services/hero-main.png"
-              alt="Modern two-storey house with automated gate and driveway"
-              className="w-full h-full object-cover"
-            />
-          </div>
+        {/* Text overlay */}
+        <div className="relative z-10 h-full max-w-[1300px] mx-auto px-6 flex flex-col items-center justify-center text-center animate-slide-up">
+          <h1 className="font-[var(--font-heading)] text-[32px] sm:text-[44px] font-[800] tracking-tight leading-[1.15] text-white mb-3 uppercase drop-shadow-md">
+            Building &amp; Fabrication
+          </h1>
+          <p className="text-white/90 text-[14px] sm:text-[16px] leading-relaxed mb-6 max-w-[420px] drop-shadow-md">
+            Gates, roofing sheets, kitchen cabinets &amp; every material to
+            build your home
+          </p>
+          <Link href="/products" className="btn-dark">
+            Shop Now
+          </Link>
         </div>
       </section>
 
