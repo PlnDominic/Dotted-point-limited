@@ -146,12 +146,12 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Right — Portrait image */}
+          {/* Right — Main hero image */}
           <div className="relative order-3 h-[220px] lg:h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/services/hero-building.jpg"
-              alt="Our building and fabrication team at work in Ghana"
+              src="/images/services/hero-main.png"
+              alt="Modern two-storey house with automated gate and driveway"
               className="w-full h-full object-cover"
             />
           </div>
