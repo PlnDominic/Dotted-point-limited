@@ -5,9 +5,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Dotted Point — Discover Products You'll Love",
+  title: "Dotted Point Limited — Building, Fabrication & Interior Finishing",
   description:
-    "Shop the latest trending products curated for modern lifestyles — fashion, electronics, beauty, fitness and more, all in one place.",
+    "We build, we fabricate, we do interiors, building finishing and consulting — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets and more.",
 };
 
 export default function RootLayout({
@@ -42,8 +42,8 @@ export default function RootLayout({
                   />
                 </div>
                 <p className="text-gray-400 text-[13px] leading-relaxed mb-5 max-w-[240px]">
-                  Shop the latest trending products curated for modern
-                  lifestyles — all in one place.
+                  We build, we fabricate, we do interiors, building
+                  finishing and consulting — end to end.
                 </p>
                 {/* Social */}
                 <div className="flex gap-3">
@@ -62,13 +62,13 @@ export default function RootLayout({
                 </div>
               </div>
 
-              {/* Shop */}
+              {/* Services */}
               <div>
                 <h3 className="font-[var(--font-heading)] text-[12px] font-bold tracking-[0.15em] text-gray-500 uppercase mb-4">
-                  Shop
+                  Services
                 </h3>
                 <ul className="space-y-2.5">
-                  {["All Products", "Fashion", "Electronics", "Beauty", "Sale"].map(
+                  {["Automated Gates", "Roller Shutters", "Iron Mongering", "Plasterboard Ceiling", "Kitchen Cabinets"].map(
                     (link) => (
                       <li key={link}>
                         <Link
@@ -83,13 +83,13 @@ export default function RootLayout({
                 </ul>
               </div>
 
-              {/* Customer Care */}
+              {/* Support */}
               <div>
                 <h3 className="font-[var(--font-heading)] text-[12px] font-bold tracking-[0.15em] text-gray-500 uppercase mb-4">
-                  Customer Care
+                  Support
                 </h3>
                 <ul className="space-y-2.5">
-                  {["Contact Us", "Shipping Info", "Returns & Exchanges", "FAQ", "Size Guide"].map(
+                  {["Contact Us", "Free Consultation", "Get a Quote", "FAQ", "Warranty"].map(
                     (link) => (
                       <li key={link}>
                         <a
@@ -110,7 +110,7 @@ export default function RootLayout({
                   Company
                 </h3>
                 <ul className="space-y-2.5">
-                  {["About Us", "Careers", "Sustainability", "Blog", "Store Locator"].map(
+                  {["About Us", "Our Projects", "Careers", "Blog"].map(
                     (link) => (
                       <li key={link}>
                         <a
@@ -131,7 +131,7 @@ export default function RootLayout({
                   Newsletter
                 </h3>
                 <p className="text-[13px] text-gray-400 mb-4 leading-relaxed">
-                  Get updates on new arrivals, exclusive offers and more.
+                  Get project tips, completed work and consulting offers.
                 </p>
                 <div className="flex">
                   <input

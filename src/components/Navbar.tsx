@@ -8,9 +8,9 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const announcements = [
-  "Free Worldwide Shipping Over $50",
-  "Summer Sale Up To 70% Off",
-  "Limited Time Flash Deals",
+  "Free Site Consultation",
+  "Licensed & Insured Tradesmen",
+  "We Build · We Fabricate · We Finish",
 ];
 
 export default function Navbar() {
@@ -36,18 +36,17 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/products", label: "Shop" },
-    { href: "/products?filter=new", label: "New Arrivals" },
-    { href: "/products?filter=bestsellers", label: "Best Sellers" },
+    { href: "/products", label: "Services" },
+    { href: "/products?filter=projects", label: "Projects" },
   ];
 
   const categoryLinks = [
-    { href: "/products?category=fashion", label: "Fashion" },
-    { href: "/products?category=electronics", label: "Electronics" },
-    { href: "/products?category=beauty", label: "Beauty" },
-    { href: "/products?category=fitness", label: "Fitness" },
-    { href: "/products?category=home-decor", label: "Home Decor" },
-    { href: "/products?category=accessories", label: "Accessories" },
+    { href: "/products?category=automated-gates", label: "Automated Gates" },
+    { href: "/products?category=roller-shutters", label: "Garage Roller Shutters" },
+    { href: "/products?category=iron-mongering", label: "Iron Mongering" },
+    { href: "/products?category=plasterboard-ceiling", label: "Plasterboard Ceiling" },
+    { href: "/products?category=painting-decoration", label: "Painting & Decoration" },
+    { href: "/products?category=kitchen-cabinets", label: "Kitchen Cabinets" },
   ];
 
   return (
@@ -104,7 +103,7 @@ export default function Navbar() {
               onMouseLeave={() => setCategoriesOpen(false)}
             >
               <button className="flex items-center gap-1 text-[14px] font-medium text-gray-500 hover:text-[#171717] transition-colors py-1">
-                Categories
+                Our Services
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m6 9 6 6 6-6" />
                 </svg>
