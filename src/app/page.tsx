@@ -163,8 +163,46 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════ OUR SERVICES ═══════ */}
+      {/* ═══════ BUILDING MATERIALS ═══════ */}
       <section className="max-w-[1300px] mx-auto px-6 py-14 md:py-16">
+        <div className="mb-8">
+          <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717] mb-2">
+            Building Materials
+          </h2>
+          <p className="text-[14px] text-gray-500 max-w-xl">
+            Everything to construct an entire building, from foundation to
+            finish — supplied and delivered.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+          {buildingMaterials.map((m, i) => (
+            <Link
+              key={m.slug}
+              href={`/products?category=${m.slug}`}
+              className={`category-card animate-slide-up delay-${i + 1}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.image} alt={m.name} className="w-full h-full object-cover" />
+              <div className="overlay" />
+              <div className="absolute bottom-2.5 left-2.5 right-2.5">
+                <h3 className="font-[var(--font-heading)] text-[11px] sm:text-[12px] font-bold text-white mb-0.5 leading-tight">
+                  {m.name}
+                </h3>
+                <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
+                  Shop Now
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════ OUR SERVICES ═══════ */}
+      <section className="max-w-[1300px] mx-auto px-6 py-6 md:py-10">
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717]">
             Our Services & Supplies
@@ -196,44 +234,6 @@ export default function Home() {
                 </h3>
                 <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
                   {s.cta}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════ BUILDING MATERIALS ═══════ */}
-      <section className="max-w-[1300px] mx-auto px-6 py-6 md:py-10">
-        <div className="mb-8">
-          <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717] mb-2">
-            Building Materials
-          </h2>
-          <p className="text-[14px] text-gray-500 max-w-xl">
-            Everything to construct an entire building, from foundation to
-            finish — supplied and delivered.
-          </p>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {buildingMaterials.map((m, i) => (
-            <Link
-              key={m.slug}
-              href={`/products?category=${m.slug}`}
-              className={`category-card animate-slide-up delay-${i + 1}`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.image} alt={m.name} className="w-full h-full object-cover" />
-              <div className="overlay" />
-              <div className="absolute bottom-2.5 left-2.5 right-2.5">
-                <h3 className="font-[var(--font-heading)] text-[11px] sm:text-[12px] font-bold text-white mb-0.5 leading-tight">
-                  {m.name}
-                </h3>
-                <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
-                  Shop Now
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
