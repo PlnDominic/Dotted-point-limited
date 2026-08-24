@@ -347,14 +347,14 @@ export default function Home() {
       <section className="max-w-[1300px] mx-auto px-6 py-6 md:py-10">
         <div className="grid md:grid-cols-2 gap-5">
           {/* Free Consultation */}
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-dark)] p-8 md:p-10 flex flex-col justify-center min-h-[280px]">
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-dark)] p-6 md:p-8 flex flex-col justify-center min-h-[200px]">
             <span className="text-white/80 text-[12px] font-semibold uppercase tracking-[0.1em] mb-2">
               Get Started
             </span>
-            <h3 className="font-[var(--font-heading)] text-[30px] md:text-[34px] font-[800] text-white leading-[1.05] tracking-[-0.02em] mb-4">
+            <h3 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] text-white leading-[1.05] tracking-[-0.02em] mb-3">
               Free Site Consultation
             </h3>
-            <ul className="space-y-1.5 mb-7 text-white/90 text-[13px]">
+            <ul className="space-y-1 mb-5 text-white/90 text-[13px]">
               {["No-obligation project quote", "Experienced on-site consulting", "Transparent, upfront pricing"].map((li) => (
                 <li key={li} className="flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -373,18 +373,18 @@ export default function Home() {
           </div>
 
           {/* Portfolio */}
-          <div className="relative rounded-2xl overflow-hidden bg-[#171717] min-h-[280px] flex items-end">
+          <div className="relative rounded-2xl overflow-hidden bg-[#171717] min-h-[200px] flex items-end">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/services/fabrication.jpg"
               alt="Fabrication workshop"
               className="absolute inset-0 w-full h-full object-cover opacity-50"
             />
-            <div className="relative z-10 p-8 md:p-10">
+            <div className="relative z-10 p-6 md:p-8">
               <span className="text-white/80 text-[12px] font-semibold uppercase tracking-[0.1em] mb-2 block">
                 Our Portfolio
               </span>
-              <h3 className="font-[var(--font-heading)] text-[28px] md:text-[32px] font-[800] text-white leading-[1.05] tracking-[-0.02em] mb-5">
+              <h3 className="font-[var(--font-heading)] text-[22px] md:text-[26px] font-[800] text-white leading-[1.05] tracking-[-0.02em] mb-4">
                 See Our Completed Projects
               </h3>
               <Link
