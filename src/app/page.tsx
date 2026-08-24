@@ -58,7 +58,7 @@ const services = [
 ];
 
 const buildingMaterials = [
-  { name: "Cement", slug: "cement", image: "/images/materials/cement.jpg", desc: "Portland cement for foundations, blockwork and plastering.", price: 89.99, originalPrice: 129.99, sold: "8.2K+", rating: 4.6, reviews: 1042 },
+  { name: "Cement", slug: "cement", image: "/images/materials/cement.png", desc: "Portland cement for foundations, blockwork and plastering.", price: 89.99, originalPrice: 129.99, sold: "8.2K+", rating: 4.6, reviews: 1042 },
   { name: "Reinforcement Steel", slug: "reinforcement-steel", image: "/images/materials/reinforcement-steel.jpg", desc: "Rebar and binding wire for structural concrete work.", price: 349.5, originalPrice: 499.0, sold: "3.1K+", rating: 4.7, reviews: 588 },
   { name: "Concrete Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Sandcrete & hollow concrete blocks for walls and fencing.", price: 12.5, originalPrice: 18.0, sold: "15K+", rating: 4.5, reviews: 2034 },
   { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings.", price: 145.0, originalPrice: 210.0, sold: "6.4K+", rating: 4.4, reviews: 762 },
