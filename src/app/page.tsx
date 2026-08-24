@@ -58,18 +58,18 @@ const services = [
 ];
 
 const buildingMaterials = [
-  { name: "Cement", slug: "cement", image: "/images/materials/cement.jpg", desc: "Portland cement for foundations, blockwork and plastering." },
-  { name: "Reinforcement Steel", slug: "reinforcement-steel", image: "/images/materials/reinforcement-steel.jpg", desc: "Rebar and binding wire for structural concrete work." },
-  { name: "Concrete Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Sandcrete & hollow concrete blocks for walls and fencing." },
-  { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings." },
-  { name: "Timber", slug: "timber", image: "/images/materials/timber.jpg", desc: "Sawn timber for roofing, formwork and carpentry." },
-  { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.jpg", desc: "Ceramic & porcelain floor tiles, adhesive and grout." },
-  { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage." },
-  { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories." },
-  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale." },
-  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale." },
-  { name: "Water Tanks", slug: "water-tanks", image: "/images/materials/water-tanks.jpg", desc: "Polytanks and water storage tanks for homes & sites." },
-  { name: "Switches & Sockets", slug: "switches-sockets", image: "/images/materials/switches-sockets.jpg", desc: "Wall switches, sockets and electrical accessories." },
+  { name: "Cement", slug: "cement", image: "/images/materials/cement.jpg", desc: "Portland cement for foundations, blockwork and plastering.", price: 89.99, originalPrice: 129.99, sold: "8.2K+", rating: 4.6, reviews: 1042 },
+  { name: "Reinforcement Steel", slug: "reinforcement-steel", image: "/images/materials/reinforcement-steel.jpg", desc: "Rebar and binding wire for structural concrete work.", price: 349.5, originalPrice: 499.0, sold: "3.1K+", rating: 4.7, reviews: 588 },
+  { name: "Concrete Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Sandcrete & hollow concrete blocks for walls and fencing.", price: 12.5, originalPrice: 18.0, sold: "15K+", rating: 4.5, reviews: 2034 },
+  { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings.", price: 145.0, originalPrice: 210.0, sold: "6.4K+", rating: 4.4, reviews: 762 },
+  { name: "Timber", slug: "timber", image: "/images/materials/timber.jpg", desc: "Sawn timber for roofing, formwork and carpentry.", price: 65.0, originalPrice: 95.0, sold: "9.7K+", rating: 4.3, reviews: 915 },
+  { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.jpg", desc: "Ceramic & porcelain floor tiles, adhesive and grout.", price: 108.49, originalPrice: 193.99, sold: "15K+", rating: 4.6, reviews: 1173 },
+  { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage.", price: 24.99, originalPrice: 39.99, sold: "12K+", rating: 4.5, reviews: 1301 },
+  { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories.", price: 54.78, originalPrice: 98.51, sold: "15K+", rating: 4.5, reviews: 887 },
+  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale.", price: 326.71, originalPrice: 596.8, sold: "7K+", rating: 4.7, reviews: 815 },
+  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale.", price: 435.39, originalPrice: 796.61, sold: "3.7K+", rating: 4.6, reviews: 166 },
+  { name: "Water Tanks", slug: "water-tanks", image: "/images/materials/water-tanks.jpg", desc: "Polytanks and water storage tanks for homes & sites.", price: 39.32, originalPrice: 71.02, sold: "19K+", rating: 4.1, reviews: 769 },
+  { name: "Switches & Sockets", slug: "switches-sockets", image: "/images/materials/switches-sockets.jpg", desc: "Wall switches, sockets and electrical accessories.", price: 18.99, originalPrice: 32.99, sold: "10K+", rating: 4.4, reviews: 640 },
 ];
 
 const capabilities = [
@@ -104,6 +104,33 @@ const recentWork = [
   { title: "Full Interior Repaint", tag: "Residential", image: "/images/services/painting-decoration.jpg" },
   { title: "Fitted Kitchen Cabinets", tag: "Interior", image: "/images/services/kitchen-cabinets.jpg" },
 ];
+
+function formatGHS(value: number) {
+  return `GH₵${value.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const filled = i + 1 <= Math.round(rating);
+        return (
+          <svg
+            key={i}
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill={filled ? "#f59e0b" : "none"}
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+          >
+            <path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z" />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Home() {
   const [liked, setLiked] = useState<Set<string>>(new Set());
@@ -163,41 +190,84 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════ BUILDING MATERIALS ═══════ */}
+      {/* ═══════ AMAZING OFFERS ═══════ */}
       <section className="max-w-[1300px] mx-auto px-6 py-14 md:py-16">
-        <div className="mb-8">
-          <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717] mb-2">
-            Building Materials
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-[var(--font-heading)] text-[22px] md:text-[26px] font-[800] tracking-[-0.01em] text-[#171717]">
+            Amazing offer
           </h2>
-          <p className="text-[14px] text-gray-500 max-w-xl">
-            Everything to construct an entire building, from foundation to
-            finish — supplied and delivered.
-          </p>
+          <Link
+            href="/products?filter=materials"
+            className="text-[13px] font-semibold text-gray-500 hover:text-[#171717] transition-colors hidden sm:flex items-center gap-1"
+          >
+            View All
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </Link>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {buildingMaterials.map((m, i) => (
-            <Link
-              key={m.slug}
-              href={`/products?category=${m.slug}`}
-              className={`category-card animate-slide-up delay-${i + 1}`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.image} alt={m.name} className="w-full h-full object-cover" />
-              <div className="overlay" />
-              <div className="absolute bottom-2.5 left-2.5 right-2.5">
-                <h3 className="font-[var(--font-heading)] text-[11px] sm:text-[12px] font-bold text-white mb-0.5 leading-tight">
-                  {m.name}
-                </h3>
-                <span className="text-[10px] font-medium text-white/80 flex items-center gap-1">
-                  Shop Now
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </span>
-              </div>
-            </Link>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+          {buildingMaterials.map((m, i) => {
+            const discount = Math.round(
+              ((m.originalPrice - m.price) / m.originalPrice) * 100
+            );
+            return (
+              <Link
+                key={m.slug}
+                href={`/products?category=${m.slug}`}
+                className={`group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow animate-slide-up delay-${i + 1}`}
+              >
+                <div className="aspect-square overflow-hidden bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.image}
+                    alt={m.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-[12.5px] text-[#171717] leading-snug mb-1.5 line-clamp-2 min-h-[32px]">
+                    {m.name}
+                  </h3>
+                  <div className="flex items-baseline gap-1.5 flex-wrap mb-1">
+                    <span className="text-[15px] font-bold text-[#171717]">
+                      {formatGHS(m.price)}
+                    </span>
+                    <span className="text-[11px] text-gray-400 line-through">
+                      {formatGHS(m.originalPrice)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10.5px] text-gray-400">
+                      {m.sold} sold
+                    </span>
+                    <span className="text-[10.5px] font-bold text-white bg-orange-500 rounded px-1.5 py-0.5">
+                      -{discount}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={m.rating} />
+                      <span className="text-[10.5px] text-gray-400">
+                        ({m.reviews.toLocaleString()})
+                      </span>
+                    </div>
+                    <span
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-[#171717] text-white shrink-0"
+                      aria-label="Add to cart"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
