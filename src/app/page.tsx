@@ -4,48 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 
 /* ─── Data ─── */
-const trustItems = [
-  {
-    title: "Licensed & Insured",
-    desc: "Fully certified tradesmen",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-        <path d="m9 12 2 2 4-4" />
-      </svg>
-    ),
-  },
-  {
-    title: "Free Consultation",
-    desc: "Site visit & project quote",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Quality Materials",
-    desc: "Durable, trusted supplies",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m7.5 4.27 9 5.15" />
-        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-        <path d="m3.3 7 8.7 5 8.7-5" />
-        <path d="M12 22V12" />
-      </svg>
-    ),
-  },
-  {
-    title: "On-Time Delivery",
-    desc: "Projects done to schedule",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 3" />
-      </svg>
-    ),
-  },
+const homeCategories = [
+  { label: "Automated Gates", slug: "automated-gates" },
+  { label: "Roller Shutters", slug: "roller-shutters" },
+  { label: "Iron Mongering", slug: "iron-mongering" },
+  { label: "Kitchen Cabinets", slug: "kitchen-cabinets" },
+  { label: "Bathroom Fittings", slug: "bathroom-fittings" },
+  { label: "Shower Cubicle", slug: "shower-cubicle" },
+  { label: "Building Materials", slug: "cement" },
 ];
 
 const services = [
@@ -173,19 +139,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════ TRUST BAR ═══════ */}
+      {/* ═══════ CATEGORY FILTER ═══════ */}
       <section className="border-b border-gray-100">
-        <div className="max-w-[1300px] mx-auto px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {trustItems.map((item, i) => (
-            <div key={item.title} className={`flex items-center gap-3 animate-slide-up delay-${i + 1}`}>
-              <div className="trust-icon">{item.icon}</div>
-              <div>
-                <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#171717]">
-                  {item.title}
-                </h3>
-                <p className="text-[12px] text-gray-400">{item.desc}</p>
-              </div>
-            </div>
+        <div className="max-w-[1300px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
+          <Link
+            href="/products"
+            className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap rounded-full bg-[#171717] text-white shrink-0 hover:opacity-90 transition-opacity"
+          >
+            All
+          </Link>
+          {homeCategories.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/products?category=${c.slug}`}
+              className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717] transition-colors shrink-0"
+            >
+              {c.label}
+            </Link>
           ))}
         </div>
       </section>

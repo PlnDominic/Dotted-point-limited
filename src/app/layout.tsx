@@ -68,7 +68,7 @@ export default function RootLayout({
                   Services
                 </h3>
                 <ul className="space-y-2.5">
-                  {["Automated Gates", "Roller Shutters", "Iron Mongering", "Kitchen Cabinets", "Kitchen Sinks", "Bathroom Fittings", "Building Materials"].map(
+                  {["Automated Gates", "Roller Shutters", "Iron Mongering", "Kitchen Cabinets", "Kitchen Sinks", "Bathroom Fittings", "Shower Cubicle", "Building Materials"].map(
                     (link) => (
                       <li key={link}>
                         <Link

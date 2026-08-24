@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types";
 import Link from "next/link";
 
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "all");
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const supabase = createClient();
 
@@ -44,6 +54,7 @@ export default function ProductsPage() {
     { value: "safety", label: "Safety" },
     { value: "plumbing-electrical", label: "Electrical" },
     { value: "hardware", label: "Hardware" },
+    { value: "shower-cubicle", label: "Shower Cubicle" },
   ];
 
   return (

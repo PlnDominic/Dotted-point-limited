@@ -44,6 +44,7 @@ export default function Navbar() {
     { href: "/products?category=kitchen-cabinets", label: "Kitchen Cabinets" },
     { href: "/products?category=kitchen-sinks", label: "Kitchen Sinks" },
     { href: "/products?category=bathroom-fittings", label: "Bathroom Fittings" },
+    { href: "/products?category=shower-cubicle", label: "Shower Cubicle" },
     { href: "/products?category=cement", label: "Building Materials" },
   ];
 
