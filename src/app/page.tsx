@@ -120,7 +120,7 @@ export default function Home() {
   return (
     <div>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative overflow-hidden h-[420px] lg:h-[560px]">
+      <section className="relative overflow-hidden h-[260px] lg:h-[340px]">
         {/* Full-bleed background image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -133,10 +133,10 @@ export default function Home() {
 
         {/* Text overlay */}
         <div className="relative z-10 h-full max-w-[1300px] mx-auto px-6 flex flex-col items-center justify-center text-center animate-slide-up">
-          <h1 className="font-[var(--font-heading)] text-[32px] sm:text-[44px] font-[800] tracking-tight leading-[1.15] text-white mb-3 uppercase drop-shadow-md">
+          <h1 className="font-[var(--font-heading)] text-[22px] sm:text-[28px] font-[800] tracking-tight leading-[1.15] text-white mb-2 uppercase drop-shadow-md">
             Building &amp; Fabrication
           </h1>
-          <p className="text-white/90 text-[14px] sm:text-[16px] leading-relaxed mb-6 max-w-[420px] drop-shadow-md">
+          <p className="text-white/90 text-[12px] sm:text-[14px] leading-relaxed mb-4 max-w-[380px] drop-shadow-md">
             Gates, roofing sheets, kitchen cabinets &amp; every material to
             build your home
           </p>
