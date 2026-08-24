@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -31,13 +32,14 @@ export default function RootLayout({
             <div className="grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-8">
               {/* Brand */}
               <div className="col-span-2 md:col-span-1">
-                <div className="mb-4">
-                  <span className="font-[var(--font-heading)] text-[20px] font-[800] tracking-tight">
-                    Dotted
-                  </span>
-                  <span className="font-[var(--font-heading)] text-[20px] font-[800] tracking-tight text-[#e8721a]">
-                    Point
-                  </span>
+                <div className="mb-4 bg-white inline-block px-2 py-1.5 rounded">
+                  <Image
+                    src="/logo.jpg"
+                    alt="Dotted Point Limited"
+                    width={162}
+                    height={54}
+                    className="h-[36px] w-auto object-contain"
+                  />
                 </div>
                 <p className="text-gray-400 text-[13px] leading-relaxed mb-5 max-w-[240px]">
                   Your destination for professional-grade tools and materials.

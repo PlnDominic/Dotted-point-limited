@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -49,13 +50,15 @@ export default function Navbar() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <nav className="max-w-[1300px] mx-auto px-6 flex items-center justify-between h-[68px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1 shrink-0">
-            <span className="brand-logo text-[22px] tracking-tight">
-              Dotted
-            </span>
-            <span className="brand-logo text-[22px] tracking-tight text-[#e8721a]">
-              Point
-            </span>
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/logo.jpg"
+              alt="Dotted Point Limited"
+              width={162}
+              height={54}
+              priority
+              className="h-[42px] w-auto object-contain"
+            />
           </Link>
 
           {/* Center Nav — Desktop */}
