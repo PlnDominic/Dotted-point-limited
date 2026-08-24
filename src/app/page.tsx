@@ -66,6 +66,17 @@ const services = [
   { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale, supplied & fitted.", cta: "Shop Now" },
 ];
 
+const buildingMaterials = [
+  { name: "Cement", slug: "cement", image: "/images/materials/cement.jpg", desc: "Portland cement for foundations, blockwork and plastering." },
+  { name: "Reinforcement Steel", slug: "reinforcement-steel", image: "/images/materials/reinforcement-steel.jpg", desc: "Rebar and binding wire for structural concrete work." },
+  { name: "Concrete Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Sandcrete & hollow concrete blocks for walls and fencing." },
+  { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings." },
+  { name: "Timber", slug: "timber", image: "/images/materials/timber.jpg", desc: "Sawn timber for roofing, formwork and carpentry." },
+  { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.jpg", desc: "Ceramic & porcelain floor tiles, adhesive and grout." },
+  { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage." },
+  { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories." },
+];
+
 const capabilities = [
   {
     name: "Building & Fabrication",
@@ -126,10 +137,9 @@ export default function Home() {
             </h1>
             <p className="text-gray-500 text-[16px] leading-relaxed mb-8 max-w-[440px]">
               A full-service Ghanaian building, fabrication and interior
-              finishing company — automated gates, roller shutters, iron
-              mongering, plasterboard ceilings, painting and decoration,
-              kitchen cabinets, plus kitchen sinks, WC, baths, taps and
-              other sanitary ware for sale, backed by expert consulting.
+              finishing company — plus everything to construct an entire
+              building: cement, blocks, roofing sheets, kitchen sinks, WC,
+              baths, taps and more, backed by expert consulting.
             </p>
             <div className="flex flex-wrap gap-3 mb-10">
               <Link href="/products" className="btn-primary">
@@ -239,6 +249,44 @@ export default function Home() {
                 </h3>
                 <span className="text-[12px] font-medium text-white/80 flex items-center gap-1">
                   {s.cta}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════ BUILDING MATERIALS ═══════ */}
+      <section className="max-w-[1300px] mx-auto px-6 py-6 md:py-10">
+        <div className="mb-8">
+          <h2 className="font-[var(--font-heading)] text-[24px] md:text-[28px] font-[800] tracking-[-0.01em] text-[#171717] mb-2">
+            Building Materials
+          </h2>
+          <p className="text-[14px] text-gray-500 max-w-xl">
+            Everything to construct an entire building, from foundation to
+            finish — supplied and delivered.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+          {buildingMaterials.map((m, i) => (
+            <Link
+              key={m.slug}
+              href={`/products?category=${m.slug}`}
+              className={`category-card animate-slide-up delay-${i + 1}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.image} alt={m.name} className="w-full h-full object-cover" />
+              <div className="overlay" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="font-[var(--font-heading)] text-[14px] font-bold text-white mb-0.5 leading-tight">
+                  {m.name}
+                </h3>
+                <span className="text-[12px] font-medium text-white/80 flex items-center gap-1">
+                  Shop Now
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
