@@ -175,7 +175,7 @@ export default function Home() {
 
       {/* ═══════ TRUST BAR ═══════ */}
       <section className="border-b border-gray-100">
-        <div className="max-w-[1300px] mx-auto px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="max-w-[1300px] mx-auto px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6">
           {trustItems.map((item, i) => (
             <div key={item.title} className={`flex items-center gap-3 animate-slide-up delay-${i + 1}`}>
               <div className="trust-icon">{item.icon}</div>
@@ -191,7 +191,7 @@ export default function Home() {
       </section>
 
       {/* ═══════ AMAZING OFFERS ═══════ */}
-      <section className="max-w-[1300px] mx-auto px-6 py-14 md:py-16">
+      <section className="max-w-[1300px] mx-auto px-6 pt-6 pb-14 md:pt-8 md:pb-16">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-[var(--font-heading)] text-[22px] md:text-[26px] font-[800] tracking-[-0.01em] text-[#171717]">
             Amazing offer
