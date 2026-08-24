@@ -1,0 +1,222 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
+
+export default function Navbar() {
+  const [user, setUser] = useState<User | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => setUser(session?.user ?? null)
+    );
+    return () => listener.subscription.unsubscribe();
+  }, [supabase]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setUser(null);
+    window.location.href = "/";
+  }
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/products", label: "Shop" },
+    { href: "/products?category=power-tools", label: "Power Tools" },
+    { href: "/products?category=building-materials", label: "Materials" },
+    { href: "/products?category=safety", label: "Safety" },
+    { href: "/products?category=plumbing-electrical", label: "Electrical" },
+  ];
+
+  return (
+    <>
+      {/* Announcement Bar */}
+      <div className="bg-[#1a1a1a] text-white text-center py-2.5 px-4 text-[13px] font-medium">
+        <span className="opacity-90">
+          🚚 Free shipping on all orders over $100 &nbsp;|&nbsp; Enjoy 30-day
+          returns
+        </span>
+      </div>
+
+      {/* Navbar */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <nav className="max-w-[1300px] mx-auto px-6 flex items-center justify-between h-[68px]">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-1 shrink-0">
+            <span className="brand-logo text-[22px] tracking-tight">
+              Dotted
+            </span>
+            <span className="brand-logo text-[22px] tracking-tight text-[#e8721a]">
+              Point
+            </span>
+          </Link>
+
+          {/* Center Nav — Desktop */}
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-[14px] font-medium transition-colors relative py-1 ${
+                  pathname === link.href
+                    ? "text-[#1a1a1a]"
+                    : "text-gray-500 hover:text-[#1a1a1a]"
+                }`}
+              >
+                {link.label}
+                {pathname === link.href && (
+                  <span className="absolute bottom-[-2px] left-0 right-0 h-[2px] bg-[#1a1a1a] rounded-full" />
+                )}
+              </Link>
+            ))}
+            <Link
+              href="/products"
+              className="text-[14px] font-semibold text-red-500 hover:text-red-600 transition-colors"
+            >
+              Sale
+            </Link>
+          </div>
+
+          {/* Right Icons */}
+          <div className="flex items-center gap-5">
+            {/* Search */}
+            <button
+              className="text-gray-600 hover:text-[#1a1a1a] transition-colors"
+              aria-label="Search"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
+
+            {/* Wishlist */}
+            <button
+              className="text-gray-600 hover:text-[#1a1a1a] transition-colors hidden sm:block"
+              aria-label="Wishlist"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+            </button>
+
+            {/* Cart */}
+            <Link
+              href="/cart"
+              className="relative text-gray-600 hover:text-[#1a1a1a] transition-colors"
+              aria-label="Cart"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+              <span className="absolute -top-1.5 -right-2 bg-[#e8721a] text-white text-[10px] font-bold w-[18px] h-[18px] rounded-full flex items-center justify-center">
+                2
+              </span>
+            </Link>
+
+            {/* Account */}
+            {user ? (
+              <Link
+                href="/account"
+                className="text-gray-600 hover:text-[#1a1a1a] transition-colors hidden sm:block"
+                aria-label="Account"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="5" />
+                  <path d="M20 21a8 8 0 0 0-16 0" />
+                </svg>
+              </Link>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-gray-600 hover:text-[#1a1a1a] transition-colors hidden sm:block"
+                aria-label="Sign in"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="5" />
+                  <path d="M20 21a8 8 0 0 0-16 0" />
+                </svg>
+              </Link>
+            )}
+
+            {/* Mobile menu toggle */}
+            <button
+              className="lg:hidden text-gray-600 hover:text-[#1a1a1a]"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle menu"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {mobileOpen ? (
+                  <>
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </>
+                ) : (
+                  <>
+                    <line x1="4" x2="20" y1="12" y2="12" />
+                    <line x1="4" x2="20" y1="6" y2="6" />
+                    <line x1="4" x2="20" y1="18" y2="18" />
+                  </>
+                )}
+              </svg>
+            </button>
+          </div>
+        </nav>
+
+        {/* Mobile Nav */}
+        {mobileOpen && (
+          <div className="lg:hidden border-t border-gray-100 bg-white animate-slide-up">
+            <div className="px-6 py-4 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block py-3 text-[15px] font-medium border-b border-gray-50 ${
+                    pathname === link.href
+                      ? "text-[#1a1a1a]"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                href="/products"
+                onClick={() => setMobileOpen(false)}
+                className="block py-3 text-[15px] font-semibold text-red-500"
+              >
+                Sale
+              </Link>
+              {user ? (
+                <button
+                  onClick={() => { setMobileOpen(false); handleSignOut(); }}
+                  className="block py-3 text-[15px] font-medium text-gray-500"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-3 text-[15px] font-medium text-[#e8721a]"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+    </>
+  );
+}
