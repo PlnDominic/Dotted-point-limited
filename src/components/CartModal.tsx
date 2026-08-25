@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { CartItem, Product } from "@/types";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-type CartItemWithProduct = CartItem & { product: Product };
+import { useCart } from "@/context/CartContext";
 
 interface CartModalProps {
   isOpen: boolean;
@@ -14,65 +9,21 @@ interface CartModalProps {
 }
 
 export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
-  const [items, setItems] = useState<CartItemWithProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const supabase = createClient();
+  const { items, loading, subtotal, updateQuantity } = useCart();
 
-  useEffect(() => {
-    // Don't touch auth or fetch anything until the cart is actually opened —
-    // this component is mounted on every page via the Navbar, so running
-    // this unconditionally on mount used to redirect every anonymous
-    // visitor straight to /auth/login the instant any page loaded.
-    if (!isOpen) return;
-
-    let cancelled = false;
-    setLoading(true);
-
-    async function loadCart() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        // Don't redirect - just show cart with available items
-        // Items will be persisted when user signs in at checkout
-        setLoading(false);
-        return;
-      }
-      const { data } = await supabase
-        .from("cart_items")
-        .select("*, product:products(*)")
-        .eq("user_id", user.id);
-      if (!cancelled) {
-        setItems((data as CartItemWithProduct[]) ?? []);
-        setLoading(false);
-      }
-    }
-    loadCart();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, supabase, setIsOpen, router]);
-
-  const subtotal = items.reduce(
-    (s, i) => s + (i.product?.price ?? 0) * i.quantity,
-    0
-  );
   const shipping = subtotal >= 100 ? 0 : 9.99;
   const total = subtotal + shipping;
 
-  if (!isOpen || loading) {
+  if (!isOpen) {
     return null;
   }
 
   return (
     <>
       {/* Invisible backdrop to catch outside clicks */}
+      <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       <div
-        className="fixed inset-0 z-40"
-        onClick={() => setIsOpen(false)}
-      />
-      <div
-        className={`absolute right-0 top-full mt-2 z-50 bg-white border border-gray-100 shadow-xl w-full max-w-md md:max-w-lg transform overflow-hidden opacity-0 transition-all duration-300 ${
+        className={`absolute right-0 top-full mt-2 z-50 bg-white border border-gray-100 shadow-xl w-[380px] max-w-[92vw] sm:w-[420px] transform overflow-hidden opacity-0 transition-all duration-300 ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
@@ -102,7 +53,11 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
         </div>
 
         {/* Items */}
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="p-8 text-center text-gray-400 text-[13px]">
+            Loading cart…
+          </div>
+        ) : items.length === 0 ? (
           <div className="p-8 text-center">
             <svg
               width="48"
@@ -125,7 +80,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
             </Link>
           </div>
         ) : (
-          <div className="p-5 space-y-3">
+          <div className="p-5 space-y-3 max-h-[50vh] overflow-y-auto">
             {items.map((item) => (
               <div
                 key={item.id}
@@ -172,9 +127,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                 {/* Quantity & Subtotal */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      // Update quantity - would need supabase update
-                    }}
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     className="w-6 h-1/2 bg-gray-100 rounded text-[10px] text-gray-500 flex items-center justify-center">
                     −
                   </button>
@@ -182,9 +135,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => {
-                      // Update quantity
-                    }}
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     className="w-6 h-1/2 bg-gray-100 rounded text-[10px] text-gray-500 flex items-center justify-center">
                     +
                   </button>
@@ -221,14 +172,16 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
           {subtotal > 0 ? (
             <Link
               href="/checkout"
-              className="w-full bg-[var(--color-brand)] text-white py-3 rounded text-[14px] font-bold hover:bg-[var(--color-brand-dark)] transition-colors"
+              onClick={() => setIsOpen(false)}
+              className="block w-full text-center bg-[var(--color-brand)] text-white py-3 rounded text-[14px] font-bold hover:bg-[var(--color-brand-dark)] transition-colors"
             >
               Proceed to Checkout
             </Link>
           ) : (
             <Link
               href="/products"
-              className="w-full text-gray-400 py-3 rounded border border-gray-200 hover:text-black transition-colors text-[13px]"
+              onClick={() => setIsOpen(false)}
+              className="block w-full text-center text-gray-400 py-3 rounded border border-gray-200 hover:text-black transition-colors text-[13px]"
             >
               Add items to cart first
             </Link>

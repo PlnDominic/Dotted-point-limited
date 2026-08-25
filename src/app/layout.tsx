@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
   title: "Dotted Point Limited - Building, Fabrication & Interior Finishing",
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
+        <CartProvider>
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
@@ -192,6 +194,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        </CartProvider>
       </body>
     </html>
   );

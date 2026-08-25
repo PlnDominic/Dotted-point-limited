@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { CartModal } from "./CartModal";
+import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
+  const { itemCount } = useCart();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -201,6 +203,11 @@ export default function Navbar() {
                   <circle cx="19" cy="21" r="1" />
                   <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
                 </svg>
+                {itemCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--color-brand)] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
               </button>
               <CartModal isOpen={cartOpen} setIsOpen={setCartOpen} />
             </div>

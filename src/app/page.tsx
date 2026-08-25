@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCart } from "@/context/CartContext";
+import type { Product } from "@/types";
 
 /* ─── Category filter — homepage navigation chrome, not admin content ─── */
 const homeCategories = [
@@ -98,7 +100,27 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function materialToProduct(m: Material): Product {
+  return {
+    id: m.id,
+    name: m.name,
+    description: m.desc,
+    price: m.price,
+    original_price: m.originalPrice,
+    image_url: m.image,
+    category: m.slug,
+    stock: 1,
+    product_type: "material",
+    sold_count: m.sold,
+    rating: m.rating,
+    reviews_count: m.reviews,
+    created_at: new Date().toISOString(),
+  };
+}
+
 export default function Home() {
+  const { addItem } = useCart();
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -197,6 +219,18 @@ export default function Home() {
 
     loadContent();
   }, []);
+
+  function handleAddToCart(m: Material) {
+    addItem(materialToProduct(m));
+    setAddedIds((prev) => new Set(prev).add(m.id));
+    window.setTimeout(() => {
+      setAddedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(m.id);
+        return next;
+      });
+    }, 1500);
+  }
 
   function toggleLike(id: string) {
     setLiked((prev) => {
@@ -358,16 +392,31 @@ export default function Home() {
                         ({m.reviews.toLocaleString()})
                       </span>
                     </div>
-                    <span
-                      className="flex items-center justify-center w-6 h-6 rounded-full bg-[#171717] text-white shrink-0"
-                      aria-label="Add to cart"
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddToCart(m);
+                      }}
+                      className={`flex items-center justify-center w-6 h-6 rounded-full text-white shrink-0 transition-colors ${
+                        addedIds.has(m.id)
+                          ? "bg-[var(--color-brand)]"
+                          : "bg-[#171717] hover:bg-[var(--color-brand)]"
+                      }`}
+                      aria-label={`Add ${m.name} to cart`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="8" cy="21" r="1" />
-                        <circle cx="19" cy="21" r="1" />
-                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                      </svg>
-                    </span>
+                      {addedIds.has(m.id) ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="8" cy="21" r="1" />
+                          <circle cx="19" cy="21" r="1" />
+                          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               </Link>
