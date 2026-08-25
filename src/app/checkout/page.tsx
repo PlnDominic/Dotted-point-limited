@@ -23,7 +23,9 @@ export default function CheckoutPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/auth/login");
+        // User not logged in - still show checkout form,
+        // they'll sign in via magic link when placing order
+        setLoading(false);
         return;
       }
 
@@ -50,7 +52,25 @@ export default function CheckoutPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+
+    if (!user) {
+      // Show magic link sign-in
+      const userEmail = (user as any)?.email || "";
+      const { error } = await supabase.auth.signInWithOtp({
+        email: userEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        console.error("Sign in error:", error);
+        setPlacing(false);
+        return;
+      }
+      // User will be redirected to /auth/callback, then we reload
+      router.push("/auth/login");
+      return;
+    }
 
     const { data: order, error: orderError } = await supabase
       .from("orders")

@@ -23,8 +23,9 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
     async function loadCart() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setIsOpen(false);
-        router.push("/auth/login");
+        // Don't redirect - just show cart with available items
+        // Items will be persisted when user signs in at checkout
+        setLoading(false);
         return;
       }
       const { data } = await supabase
