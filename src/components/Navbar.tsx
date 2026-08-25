@@ -144,7 +144,7 @@ export default function Navbar() {
           </div>
 
           {/* Right Icons */}
-          <div className="flex items-center gap-5">
+          <div className="relative flex items-center gap-5">
             {/* Search */}
             <button
               className="text-gray-600 hover:text-[#171717] transition-colors"
@@ -192,25 +192,23 @@ export default function Navbar() {
             )}
 
             {/* Cart */}
-            <div className="relative">
-              <button
-                onClick={() => setCartOpen(true)}
-                className="relative text-gray-600 hover:text-[#171717] transition-colors"
-                aria-label="Cart"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="8" cy="21" r="1" />
-                  <circle cx="19" cy="21" r="1" />
-                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                </svg>
-                {itemCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--color-brand)] text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                    {itemCount > 99 ? "99+" : itemCount}
-                  </span>
-                )}
-              </button>
-              <CartModal isOpen={cartOpen} setIsOpen={setCartOpen} />
-            </div>
+            <button
+              onClick={() => setCartOpen((open) => !open)}
+              className="relative text-gray-600 hover:text-[#171717] transition-colors"
+              aria-label="Cart"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--color-brand)] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              )}
+            </button>
+            <CartModal isOpen={cartOpen} setIsOpen={setCartOpen} />
 
             {/* Mobile menu toggle */}
             <button
