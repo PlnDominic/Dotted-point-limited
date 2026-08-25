@@ -142,7 +142,7 @@ export default function Navbar() {
           </div>
 
           {/* Right Icons */}
-          <div className="flex items-center gap-5">
+          <div className="relative flex items-center gap-5">
             {/* Search */}
             <button
               className="text-gray-600 hover:text-[#171717] transition-colors"
@@ -191,8 +191,8 @@ export default function Navbar() {
 
             {/* Cart */}
             <button
-              onClick={() => setCartOpen(true)}
-              className="relative text-gray-600 hover:text-[#171717] transition-colors"
+              onClick={() => setCartOpen((open) => !open)}
+              className="text-gray-600 hover:text-[#171717] transition-colors"
               aria-label="Cart"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

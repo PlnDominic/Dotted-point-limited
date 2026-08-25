@@ -65,23 +65,19 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={() => setIsOpen(false)}
-    >
-      <div
-        className={`bg-white rounded-2xl w-full max-w-md mx-4 md:max-w-lg transform overflow-hidden opacity-0 transition-all duration-300 ${
-          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-      >
+    <>
+      {/* Click-away layer — invisible, just for closing on an outside click */}
+      <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+
+      <div className="absolute right-0 top-full mt-3 z-50 w-[92vw] max-w-sm sm:w-96 bg-white border border-gray-200 shadow-xl">
         {/* Header */}
-        <div className="p-5 border-b border-gray-100">
+        <div className="relative p-5 border-b border-gray-100">
           <h2 className="font-[var(--font-heading)] text-[20px] font-bold text-[#1a1a1a]">
             Shopping Cart
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute right-2 text-gray-400 hover:text-black transition-colors"
+            className="absolute top-5 right-5 text-gray-400 hover:text-black transition-colors"
             aria-label="Close cart"
           >
             <svg
@@ -118,7 +114,11 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
               <path d="M7 21l-4-4 13-13M21 7l-4-4 13-13" />
             </svg>
             <p className="text-gray-600 mb-2">Your cart is empty</p>
-            <Link href="/products" className="btn-dark">
+            <Link
+              href="/products"
+              onClick={() => setIsOpen(false)}
+              className="inline-flex items-center justify-center bg-[#171717] text-white font-bold py-3 px-6 text-[13px] hover:bg-black transition-colors"
+            >
               Continue Shopping
             </Link>
           </div>
@@ -130,7 +130,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                 className="flex items-center gap-3 py-2 border-b border-gray-100 last-border-0"
               >
                 {/* Image */}
-                <div className="w-12 h-12 rounded overflow-hidden shrink-0">
+                <div className="w-12 h-12 overflow-hidden shrink-0">
                   {item.product?.image_url ? (
                     <img
                       src={item.product.image_url}
@@ -173,7 +173,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                     onClick={() => {
                       // Update quantity - would need supabase update
                     }}
-                    className="w-6 h-1/2 bg-gray-100 rounded text-[10px] text-gray-500 flex items-center justify-center">
+                    className="w-6 h-1/2 bg-gray-100 text-[10px] text-gray-500 flex items-center justify-center">
                     −
                   </button>
                   <span className="w-8 text-center font-[var(--font-heading)] text-[11px] font-semibold">
@@ -183,7 +183,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                     onClick={() => {
                       // Update quantity
                     }}
-                    className="w-6 h-1/2 bg-gray-100 rounded text-[10px] text-gray-500 flex items-center justify-center">
+                    className="w-6 h-1/2 bg-gray-100 text-[10px] text-gray-500 flex items-center justify-center">
                     +
                   </button>
                   <span className="text-[11px] font-bold">
@@ -219,20 +219,22 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
           {subtotal > 0 ? (
             <Link
               href="/checkout"
-              className="w-full bg-[var(--color-brand)] text-white py-3 rounded text-[14px] font-bold hover:bg-[var(--color-brand-dark)] transition-colors"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-center w-full bg-[var(--color-brand)] text-white py-3 text-[14px] font-bold hover:bg-[var(--color-brand-dark)] transition-colors"
             >
               Proceed to Checkout
             </Link>
           ) : (
             <Link
               href="/products"
-              className="w-full text-gray-400 py-3 rounded border border-gray-200 hover:text-black transition-colors text-[13px]"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-center w-full text-gray-400 py-3 border border-gray-200 hover:text-black transition-colors text-[13px]"
             >
               Add items to cart first
             </Link>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
