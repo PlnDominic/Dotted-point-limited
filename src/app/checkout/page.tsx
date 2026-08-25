@@ -2,83 +2,151 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { CartItem, Product } from "@/types";
 import { useRouter } from "next/navigation";
 import { formatGHS } from "@/lib/currency";
+import { useCart } from "@/context/CartContext";
 
-type CartItemWithProduct = CartItem & { product: Product };
+const GHANA_REGIONS = [
+  "Ahafo",
+  "Ashanti",
+  "Bono",
+  "Bono East",
+  "Central",
+  "Eastern",
+  "Greater Accra",
+  "North East",
+  "Northern",
+  "Oti",
+  "Savannah",
+  "Upper East",
+  "Upper West",
+  "Volta",
+  "Western",
+  "Western North",
+];
+
+type ShippingDetails = {
+  email: string;
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
+  region: string;
+  notes: string;
+};
+
+const emptyShipping: ShippingDetails = {
+  email: "",
+  fullName: "",
+  phone: "",
+  address: "",
+  city: "",
+  region: "",
+  notes: "",
+};
+
+const DRAFT_KEY = "dpl_checkout_shipping_draft";
 
 export default function CheckoutPage() {
-  const [items, setItems] = useState<CartItemWithProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading, subtotal, clear } = useCart();
   const [placing, setPlacing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [awaitingSignIn, setAwaitingSignIn] = useState(false);
+  const [shipping, setShipping] = useState<ShippingDetails>(emptyShipping);
+  const [errors, setErrors] = useState<Partial<Record<keyof ShippingDetails, string>>>({});
   const router = useRouter();
   const supabase = createClient();
 
+  // Restore an in-progress shipping form (e.g. after leaving to click a
+  // magic-link email) and prefill the signed-in user's email if we have one.
   useEffect(() => {
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        // User not logged in - still show checkout form,
-        // they'll sign in via magic link when placing order
-        setLoading(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("cart_items")
-        .select("*, product:products(*)")
-        .eq("user_id", user.id);
-
-      setItems((data as CartItemWithProduct[]) ?? []);
-      setLoading(false);
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw) setShipping((prev) => ({ ...prev, ...JSON.parse(raw) }));
+    } catch {
+      // ignore malformed/unavailable storage
     }
-    load();
+    supabase.auth.getUser().then(({ data }) => {
+      const email = data.user?.email;
+      if (email) setShipping((prev) => (prev.email ? prev : { ...prev, email }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + (item.product?.price ?? 0) * item.quantity,
-    0
-  );
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(shipping));
+    } catch {
+      // ignore unavailable storage
+    }
+  }, [shipping]);
+
+  function updateField<K extends keyof ShippingDetails>(field: K, value: string) {
+    setShipping((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  }
+
+  function validate(): boolean {
+    const next: Partial<Record<keyof ShippingDetails, string>> = {};
+    if (!shipping.email.trim()) next.email = "Email is required";
+    if (!shipping.fullName.trim()) next.fullName = "Full name is required";
+    if (!shipping.phone.trim()) next.phone = "Phone number is required";
+    if (!shipping.address.trim()) next.address = "Delivery address is required";
+    if (!shipping.city.trim()) next.city = "Town / city is required";
+    if (!shipping.region.trim()) next.region = "Region is required";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
   const total = subtotal;
 
   async function placeOrder() {
+    if (!validate()) return;
     setPlacing(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      // Show magic link sign-in
-      const userEmail = (user as any)?.email || "";
       const { error } = await supabase.auth.signInWithOtp({
-        email: userEmail,
+        email: shipping.email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/checkout`,
         },
       });
       if (error) {
         console.error("Sign in error:", error);
+        setErrors((prev) => ({ ...prev, email: "Couldn't send sign-in link. Check the email and try again." }));
         setPlacing(false);
         return;
       }
-      // User will be redirected to /auth/callback, then we reload
-      router.push("/auth/login");
+      // The customer signs in via the emailed link, lands back on /checkout,
+      // and their shipping draft (saved above) is restored automatically.
+      setAwaitingSignIn(true);
+      setPlacing(false);
       return;
     }
 
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .insert({ user_id: user.id, total, status: "pending" })
+      .insert({
+        user_id: user.id,
+        total,
+        status: "pending",
+        shipping_name: shipping.fullName.trim(),
+        shipping_phone: shipping.phone.trim(),
+        shipping_address: shipping.address.trim(),
+        shipping_city: shipping.city.trim(),
+        shipping_region: shipping.region,
+        shipping_notes: shipping.notes.trim() || null,
+      })
       .select()
       .single();
 
     if (orderError || !order) {
+      console.error("Order error:", orderError);
       setPlacing(false);
       return;
     }
@@ -91,7 +159,12 @@ export default function CheckoutPage() {
     }));
 
     await supabase.from("order_items").insert(orderItems);
-    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await clear();
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
 
     setOrderId(order.id);
     setSuccess(true);
@@ -132,7 +205,7 @@ export default function CheckoutPage() {
             has been placed.
           </p>
           <p className="text-[var(--fg-muted)] text-sm mb-8">
-            A confirmation email will arrive shortly.
+            We&apos;ll deliver to {shipping.address}, {shipping.city}.
           </p>
           <button
             onClick={() => router.push("/products")}
@@ -140,6 +213,28 @@ export default function CheckoutPage() {
           >
             Continue Shopping
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (awaitingSignIn) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-[var(--border-subtle)] rounded-none flex items-center justify-center mx-auto mb-6">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2" />
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+            </svg>
+          </div>
+          <p className="font-display text-xl tracking-wide mb-2">
+            Check your email
+          </p>
+          <p className="text-[var(--fg-secondary)] text-sm">
+            We sent a sign-in link to <strong>{shipping.email}</strong>.
+            Open it to confirm your order — your shipping details are saved.
+          </p>
         </div>
       </div>
     );
@@ -167,6 +262,10 @@ export default function CheckoutPage() {
     );
   }
 
+  const inputClass =
+    "w-full bg-[var(--bg-primary,white)] border border-[var(--border-subtle)] px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--color-brand)] transition-colors";
+  const errorClass = "text-red-500 text-xs mt-1";
+
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-12">
       <div className="mb-10">
@@ -179,8 +278,121 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Order items */}
-        <div className="lg:col-span-2">
+        {/* Shipping details + order items */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Shipping details */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+            <div className="p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="font-display text-sm tracking-[0.2em] text-[var(--fg-muted)]">
+                Shipping Details
+              </h2>
+            </div>
+            <div className="p-6 grid sm:grid-cols-2 gap-5">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={shipping.email}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+                {errors.email && <p className={errorClass}>{errors.email}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={shipping.fullName}
+                  onChange={(e) => updateField("fullName", e.target.value)}
+                  placeholder="Kwame Mensah"
+                  className={inputClass}
+                />
+                {errors.fullName && <p className={errorClass}>{errors.fullName}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  value={shipping.phone}
+                  onChange={(e) => updateField("phone", e.target.value)}
+                  placeholder="024 000 0000"
+                  className={inputClass}
+                />
+                {errors.phone && <p className={errorClass}>{errors.phone}</p>}
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Delivery Address *
+                </label>
+                <input
+                  type="text"
+                  value={shipping.address}
+                  onChange={(e) => updateField("address", e.target.value)}
+                  placeholder="House number, street, landmark"
+                  className={inputClass}
+                />
+                {errors.address && <p className={errorClass}>{errors.address}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Town / City *
+                </label>
+                <input
+                  type="text"
+                  value={shipping.city}
+                  onChange={(e) => updateField("city", e.target.value)}
+                  placeholder="Accra"
+                  className={inputClass}
+                />
+                {errors.city && <p className={errorClass}>{errors.city}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Region *
+                </label>
+                <select
+                  value={shipping.region}
+                  onChange={(e) => updateField("region", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Select a region</option>
+                  {GHANA_REGIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+                {errors.region && <p className={errorClass}>{errors.region}</p>}
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-[var(--fg-muted)] mb-1.5">
+                  Delivery Notes (optional)
+                </label>
+                <textarea
+                  value={shipping.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                  placeholder="Gate code, best time to deliver, etc."
+                  rows={3}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Order items */}
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
             <div className="p-6 border-b border-[var(--border-subtle)]">
               <h2 className="font-display text-sm tracking-[0.2em] text-[var(--fg-muted)]">

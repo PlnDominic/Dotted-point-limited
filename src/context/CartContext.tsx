@@ -49,6 +49,7 @@ interface CartContextValue {
   addItem: (product: Product, quantity?: number) => Promise<void>;
   updateQuantity: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;
+  clear: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -234,6 +235,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [updateQuantity]
   );
 
+  const clear = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      await supabase.from("cart_items").delete().eq("user_id", user.id);
+    }
+    writeGuestCart([]);
+    setItems([]);
+  }, [supabase]);
+
   const itemCount = useMemo(
     () => items.reduce((sum, l) => sum + l.quantity, 0),
     [items]
@@ -251,6 +264,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addItem,
     updateQuantity,
     removeItem,
+    clear,
     refresh,
   };
 

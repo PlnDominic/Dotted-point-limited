@@ -353,3 +353,13 @@ WHERE NOT EXISTS (SELECT 1 FROM capabilities);
 INSERT INTO hero_content (id, image_url, headline, subtext, cta_label, cta_href)
 VALUES (1, '/images/services/hero-main.png', 'Building & Fabrication', 'Gates, roofing sheets, kitchen cabinets & every material to build your home', 'Shop Now', '/products')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- Shipping details on orders
+-- ============================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_region TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_notes TEXT;

@@ -29,6 +29,12 @@ export interface Order {
   total: number;
   status: "pending" | "paid" | "shipped" | "delivered";
   created_at: string;
+  shipping_name?: string | null;
+  shipping_phone?: string | null;
+  shipping_address?: string | null;
+  shipping_city?: string | null;
+  shipping_region?: string | null;
+  shipping_notes?: string | null;
   items?: OrderItem[];
 }
 
