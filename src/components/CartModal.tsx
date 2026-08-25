@@ -65,23 +65,25 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={() => setIsOpen(false)}
-    >
+    <>
+      {/* Invisible backdrop to catch outside clicks */}
       <div
-        className={`bg-white rounded-2xl w-full max-w-md mx-4 md:max-w-lg transform overflow-hidden opacity-0 transition-all duration-300 ${
+        className="fixed inset-0 z-40"
+        onClick={() => setIsOpen(false)}
+      />
+      <div
+        className={`absolute right-0 top-full mt-2 z-50 bg-white border border-gray-100 shadow-xl w-full max-w-md md:max-w-lg transform overflow-hidden opacity-0 transition-all duration-300 ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
         {/* Header */}
-        <div className="p-5 border-b border-gray-100">
+        <div className="p-5 border-b border-gray-100 relative">
           <h2 className="font-[var(--font-heading)] text-[20px] font-bold text-[#1a1a1a]">
             Shopping Cart
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute right-2 text-gray-400 hover:text-black transition-colors"
+            className="absolute right-5 top-5 text-gray-400 hover:text-black transition-colors"
             aria-label="Close cart"
           >
             <svg
@@ -233,6 +235,6 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
