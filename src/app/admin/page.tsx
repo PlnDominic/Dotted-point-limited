@@ -476,12 +476,20 @@ function ProductsTab({
                 </div>
               </>
             ) : (
-              <input
-                placeholder="Button label, e.g. View Service"
-                value={form.cta_label}
-                onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
+              <div>
+                <p className="text-[12px] text-gray-400 mb-1">
+                  Shown on the homepage&apos;s Our Services &amp; Supplies tile
+                </p>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Button Label
+                </label>
+                <input
+                  placeholder="e.g. View Service"
+                  value={form.cta_label}
+                  onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded text-[14px]"
+                />
+              </div>
             )}
 
             <div className="flex gap-3">
