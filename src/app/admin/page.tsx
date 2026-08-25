@@ -7,8 +7,35 @@ import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
 
+const CATEGORIES = [
+  { value: "automated-gates", label: "Automated Gates" },
+  { value: "roller-shutters", label: "Garage Roller Shutters" },
+  { value: "iron-mongering", label: "Iron Mongering" },
+  { value: "plasterboard-ceiling", label: "Plasterboard Ceiling" },
+  { value: "painting-decoration", label: "Painting & Decoration" },
+  { value: "kitchen-cabinets", label: "Kitchen Cabinets" },
+  { value: "kitchen-sinks", label: "Kitchen Sinks" },
+  { value: "bathroom-fittings", label: "Bathroom Fittings" },
+  { value: "shower-cubicle", label: "Shower Cubicle" },
+  { value: "concrete-blocks", label: "Building Materials" },
+  { value: "building-and-construction", label: "Building & Construction" },
+  { value: "painting", label: "Painting" },
+  { value: "iron-metal-fabrication", label: "Iron Metal Fabrication" },
+  { value: "structural-works", label: "Structural Works" },
+  { value: "cabinet", label: "Cabinet" },
+  { value: "frameless-glass-balustrade", label: "Frameless Glass Balustrade" },
+  { value: "stainless-balustrade", label: "Stainless Balustrade" },
+  { value: "window-glazing", label: "Window Glazing" },
+  { value: "curtain-walls", label: "Curtain Walls" },
+  { value: "power-tools", label: "Power Tools" },
+  { value: "safety", label: "Safety" },
+  { value: "plumbing-electrical", label: "Plumbing & Electrical" },
+  { value: "hardware", label: "Hardware" },
+];
+
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"view" | "add" | "edit">("view");
@@ -33,11 +60,27 @@ export default function AdminPanel() {
   }, [supabase]);
 
   useEffect(() => {
-    if (user) {
-      fetchProducts();
-    } else {
-      setLoading(false);
+    async function checkAdmin() {
+      if (!user) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+      // RLS on `admins` only allows an admin's own row to be read, so a
+      // non-admin signed-in user simply gets an empty result here.
+      const { data } = await supabase
+        .from("admins")
+        .select("email")
+        .eq("email", user.email)
+        .maybeSingle();
+      setIsAdmin(!!data);
+      if (data) {
+        fetchProducts();
+      } else {
+        setLoading(false);
+      }
     }
+    checkAdmin();
   }, [user]);
 
   const fetchProducts = async () => {
@@ -106,7 +149,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     fetchProducts();
   };
 
-  if (loading || !user) {
+  if (loading || !user || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-[1300px] mx-auto">
@@ -116,12 +159,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div key={i} className="animate-pulse bg-white rounded h-48" />
               ))}
             </div>
-          ) : user ? (
-            <></>
+          ) : !user ? (
+            <div className="text-center my-12">
+              <Link href="/admin/login" className="btn-dark">
+                Sign in to access admin
+              </Link>
+            </div>
           ) : (
             <div className="text-center my-12">
-              <Link href="/auth/login" className="btn-dark">
-                Sign in to access admin
+              <p className="text-gray-500 text-[14px] mb-4">
+                Signed in as {user.email}, but this account isn&apos;t on the
+                admin list.
+              </p>
+              <Link href="/" className="btn-dark">
+                Back to site
               </Link>
             </div>
           )}
@@ -245,12 +296,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                 className="w-full px-3 py-2 border rounded text-[14px]"
               >
-                <option value="power-tools">Power Tools</option>
-                <option value="building-materials">Building Materials</option>
-                <option value="safety">Safety</option>
-                <option value="plumbing-electrical">Plumbing & Electrical</option>
-                <option value="hardware">Hardware</option>
-                <option value="shower-cubicle">Shower Cubicle</option>
+                <option value="">Select a category</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
               <input
                 type="number"

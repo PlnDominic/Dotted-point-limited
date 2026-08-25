@@ -11,6 +11,7 @@ import { CartModal } from "./CartModal";
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
@@ -189,10 +190,18 @@ export default function Navbar() {
             )}
 
             {/* Cart */}
-            <CartModal
-              isOpen={mobileOpen}
-              setIsOpen={setMobileOpen}
-            />
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative text-gray-600 hover:text-[#171717] transition-colors"
+              aria-label="Cart"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+            </button>
+            <CartModal isOpen={cartOpen} setIsOpen={setCartOpen} />
 
             {/* Mobile menu toggle */}
             <button
