@@ -443,7 +443,7 @@ export default function Home() {
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="aspect-square bg-gray-100 animate-pulse rounded-2xl" />
+              <div key={i} className="aspect-square bg-gray-100 animate-pulse" />
             ))}
           </div>
         ) : filteredServices.length === 0 ? (
@@ -561,7 +561,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-5">
             {[1, 2, 3].map((i) => (
               <div key={i} className="product-card p-4 flex gap-4 items-center animate-pulse">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl bg-gray-100" />
+                <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 bg-gray-100" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 bg-gray-100 rounded w-2/3" />
                   <div className="h-3 bg-gray-100 rounded w-full" />
@@ -577,7 +577,7 @@ export default function Home() {
               key={item.id}
               className={`product-card p-4 flex gap-4 items-center animate-slide-up delay-${i + 1}`}
             >
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden bg-[#f8f8f8]">
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-[#f8f8f8]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               </div>
@@ -635,7 +635,7 @@ export default function Home() {
           </div>
 
           {/* Portfolio */}
-          <div className="relative rounded-2xl overflow-hidden bg-[#171717] min-h-[200px] flex items-end">
+          <div className="relative overflow-hidden bg-[#171717] min-h-[200px] flex items-end">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/services/fabrication.jpg"

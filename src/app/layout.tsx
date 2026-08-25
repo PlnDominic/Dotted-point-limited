@@ -39,7 +39,7 @@ export default function RootLayout({
             <div className="grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-8">
               {/* Brand */}
               <div className="col-span-2 md:col-span-1">
-                <div className="mb-4 bg-white inline-block px-2 py-1.5 rounded">
+                <div className="mb-4 bg-white inline-block px-2 py-1.5">
                   <Image
                     src="/logo.jpg"
                     alt="Dotted Point Limited"

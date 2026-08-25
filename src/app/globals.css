@@ -163,7 +163,6 @@ body {
 /* ─── Category card ─── */
 .category-card {
   position: relative;
-  border-radius: 16px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
   cursor: pointer;
@@ -182,7 +181,6 @@ body {
 .product-card {
   background: #fff;
   border: 1px solid #f0f0f0;
-  border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -265,7 +263,6 @@ body {
 .avatar-stack img {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
   border: 2.5px solid #fff;
   object-fit: cover;
   margin-left: -10px;

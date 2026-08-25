@@ -375,7 +375,7 @@ function ProductsTab({
                 <img
                   src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
                   alt="Preview"
-                  className="w-24 h-24 object-cover rounded mt-2"
+                  className="w-24 h-24 object-cover mt-2"
                 />
               )}
             </div>
@@ -505,7 +505,7 @@ function ProductsTab({
               <img
                 src={product.image_url || "/placeholder.svg"}
                 alt={product.name}
-                className="w-full h-40 object-cover rounded-t"
+                className="w-full h-40 object-cover"
               />
               <div className="p-3">
                 <span className="text-[10px] uppercase font-bold text-[var(--color-brand)]">
@@ -661,7 +661,7 @@ function RecentWorkTab({
                 <img
                   src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
                   alt="Preview"
-                  className="w-24 h-24 object-cover rounded mt-2"
+                  className="w-24 h-24 object-cover mt-2"
                 />
               )}
             </div>
@@ -706,7 +706,7 @@ function RecentWorkTab({
               <img
                 src={item.image_url || "/placeholder.svg"}
                 alt={item.title}
-                className="w-full h-40 object-cover rounded-t"
+                className="w-full h-40 object-cover"
               />
               <div className="p-3">
                 <p className="text-[10px] uppercase font-bold text-[var(--color-brand)]">{item.tag}</p>
@@ -874,7 +874,7 @@ function CapabilitiesTab({
                 <img
                   src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
                   alt="Preview"
-                  className="w-24 h-24 object-cover rounded mt-2"
+                  className="w-24 h-24 object-cover mt-2"
                 />
               )}
             </div>
@@ -919,7 +919,7 @@ function CapabilitiesTab({
               <img
                 src={item.image_url || "/placeholder.svg"}
                 alt={item.name}
-                className="w-full h-40 object-cover rounded-t"
+                className="w-full h-40 object-cover"
               />
               <div className="p-3">
                 <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
@@ -1049,7 +1049,7 @@ function HeroTab({
               <img
                 src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
                 alt="Preview"
-                className="w-full h-32 object-cover rounded mt-2"
+                className="w-full h-32 object-cover mt-2"
               />
             )}
           </div>
