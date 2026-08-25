@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { CartItem, Product } from "@/types";
 import { useRouter } from "next/navigation";
+import { formatGHS } from "@/lib/currency";
 
 type CartItemWithProduct = CartItem & { product: Product };
 
@@ -44,8 +45,7 @@ export default function CheckoutPage() {
     (sum, item) => sum + (item.product?.price ?? 0) * item.quantity,
     0
   );
-  const shipping = subtotal >= 50 ? 0 : 5.99;
-  const total = subtotal + shipping;
+  const total = subtotal;
 
   async function placeOrder() {
     setPlacing(true);
@@ -198,11 +198,11 @@ export default function CheckoutPage() {
                       {item.product?.name}
                     </p>
                     <p className="text-[var(--fg-muted)] text-sm mt-1">
-                      ${item.product?.price.toFixed(2)} × {item.quantity}
+                      {formatGHS(item.product?.price ?? 0)} × {item.quantity}
                     </p>
                   </div>
                   <p className="font-display text-base tracking-tight">
-                    ${((item.product?.price ?? 0) * item.quantity).toFixed(2)}
+                    {formatGHS((item.product?.price ?? 0) * item.quantity)}
                   </p>
                 </div>
               ))}
@@ -220,13 +220,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 text-sm mb-6">
               <div className="flex justify-between">
                 <span className="text-[var(--fg-secondary)]">Subtotal</span>
-                <span className="font-display">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--fg-secondary)]">Shipping</span>
-                <span className="font-display">
-                  {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
-                </span>
+                <span className="font-display">{formatGHS(subtotal)}</span>
               </div>
             </div>
 
@@ -236,7 +230,7 @@ export default function CheckoutPage() {
                   Total
                 </span>
                 <span className="font-display text-2xl tracking-tight">
-                  ${total.toFixed(2)}
+                  {formatGHS(total)}
                 </span>
               </div>
             </div>

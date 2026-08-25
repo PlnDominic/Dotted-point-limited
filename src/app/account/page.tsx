@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Order } from "@/types";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { formatGHS } from "@/lib/currency";
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -145,7 +146,7 @@ export default function AccountPage() {
                       order.status.slice(1)}
                   </span>
                   <span className="font-display text-base tracking-tight">
-                    ${order.total.toFixed(2)}
+                    {formatGHS(order.total)}
                   </span>
                 </div>
               </div>

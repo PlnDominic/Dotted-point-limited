@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatGHS } from "@/lib/currency";
 
 export default function ProductsPage() {
   return (
@@ -225,7 +226,7 @@ function ProductsPageContent() {
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="font-[var(--font-heading)] text-[15px] font-bold text-[#1a1a1a]">
-                    ${product.price.toFixed(2)}
+                    {formatGHS(product.price)}
                   </span>
                   {product.stock > 0 ? (
                     <div className="flex items-center gap-2">

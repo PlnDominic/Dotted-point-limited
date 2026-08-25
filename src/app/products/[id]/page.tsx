@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types";
+import { formatGHS } from "@/lib/currency";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -119,7 +120,7 @@ export default function ProductDetailPage() {
           </h1>
 
           <p className="font-[var(--font-heading)] text-[28px] font-[800] text-[var(--color-brand)] mb-6">
-            ${product.price.toFixed(2)}
+            {formatGHS(product.price)}
           </p>
 
           <p className="text-gray-500 text-[15px] leading-relaxed mb-8 max-w-lg">

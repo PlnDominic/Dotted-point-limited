@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/context/CartContext";
+import { formatGHS } from "@/lib/currency";
 import type { Product } from "@/types";
 
 /* ─── Category filter — homepage navigation chrome, not admin content ─── */
@@ -72,10 +73,6 @@ type RecentWork = {
   tag: string;
   image: string;
 };
-
-function formatGHS(value: number) {
-  return `GH₵${value.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function StarRating({ rating }: { rating: number }) {
   return (

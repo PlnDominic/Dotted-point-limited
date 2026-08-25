@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { CartItem, Product } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatGHS } from "@/lib/currency";
 
 type CartItemWithProduct = CartItem & { product: Product };
 
@@ -37,8 +38,7 @@ export default function CartPage() {
   }
 
   const subtotal = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
-  const shipping = subtotal >= 100 ? 0 : 9.99;
-  const total = subtotal + shipping;
+  const total = subtotal;
 
   if (loading) {
     return (
@@ -94,7 +94,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-[var(--font-heading)] text-[14px] font-semibold text-[#1a1a1a] truncate">{item.product?.name}</h3>
-                  <p className="text-gray-400 text-[13px]">${item.product?.price.toFixed(2)}</p>
+                  <p className="text-gray-400 text-[13px]">{formatGHS(item.product?.price ?? 0)}</p>
                 </div>
                 <div className="flex items-center border border-gray-200 bg-white">
                   <button onClick={() => updateQty(item.id, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-gray-50">−</button>
@@ -102,7 +102,7 @@ export default function CartPage() {
                   <button onClick={() => updateQty(item.id, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-gray-50">+</button>
                 </div>
                 <p className="font-[var(--font-heading)] text-[15px] font-bold w-20 text-right">
-                  ${((item.product?.price ?? 0) * item.quantity).toFixed(2)}
+                  {formatGHS((item.product?.price ?? 0) * item.quantity)}
                 </p>
                 <button onClick={() => removeItem(item.id)} className="text-[12px] text-gray-400 hover:text-red-500 transition-colors font-[var(--font-heading)] tracking-wide">
                   Remove
@@ -118,18 +118,12 @@ export default function CartPage() {
                 Order Summary
               </h2>
               <div className="space-y-3 text-[14px] mb-5">
-                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-[var(--font-heading)] font-semibold">${subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span className="font-[var(--font-heading)] font-semibold">{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span></div>
-                {subtotal > 0 && subtotal < 100 && (
-                  <p className="text-[12px] text-gray-400 bg-white p-3 border border-gray-100">
-                    Add ${(100 - subtotal).toFixed(2)} more for free shipping.
-                  </p>
-                )}
+                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-[var(--font-heading)] font-semibold">{formatGHS(subtotal)}</span></div>
               </div>
               <div className="border-t border-gray-200 pt-5 mb-5">
                 <div className="flex justify-between">
                   <span className="font-[var(--font-heading)] text-[15px] font-semibold">Total</span>
-                  <span className="font-[var(--font-heading)] text-[20px] font-[800]">${total.toFixed(2)}</span>
+                  <span className="font-[var(--font-heading)] text-[20px] font-[800]">{formatGHS(total)}</span>
                 </div>
               </div>
               <Link href="/checkout" className="btn-dark block text-center w-full py-4 text-[14px]">

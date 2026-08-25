@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { formatGHS } from "@/lib/currency";
 
 interface CartModalProps {
   isOpen: boolean;
@@ -10,9 +11,6 @@ interface CartModalProps {
 
 export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
   const { items, loading, subtotal, updateQuantity } = useCart();
-
-  const shipping = subtotal >= 100 ? 0 : 9.99;
-  const total = subtotal + shipping;
 
   if (!isOpen) {
     return null;
@@ -120,9 +118,9 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                   <p className="font-[var(--font-heading)] text-[12px] font-semibold text-[#1a1a1a]">
                     {item.product?.name}
                   </p>
-                  <p className="text-gray-400 text-[11px]">${item.product?.price.toFixed(
-                    2
-                  )}</p>
+                  <p className="text-gray-400 text-[11px]">
+                    {formatGHS(item.product?.price ?? 0)}
+                  </p>
                 </div>
 
                 {/* Quantity & Subtotal */}
@@ -141,7 +139,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
                     +
                   </button>
                   <span className="text-[11px] font-bold">
-                    ${((item.product?.price ?? 0) * item.quantity).toFixed(2)}
+                    {formatGHS((item.product?.price ?? 0) * item.quantity)}
                   </span>
                 </div>
               </div>
@@ -151,19 +149,10 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
 
         {/* Summary */}
         <div className="p-5 border-t border-gray-100">
-          <div className="flex justify-between mb-3">
-            <span className="text-gray-500">Subtotal</span>
-            <span className="font-bold">${subtotal.toFixed(2)}</span>
-          </div>
-          {subtotal < 100 && (
-            <div className="flex justify-between text-xs text-gray-400 mb-3">
-              <span>Add ${(100 - subtotal).toFixed(2)} more for free shipping</span>
-            </div>
-          )}
           <div className="flex justify-between">
             <span className="font-bold">Total</span>
             <span className="text-2xl font-bold text-[#171717]">
-              ${total.toFixed(2)}
+              {formatGHS(subtotal)}
             </span>
           </div>
         </div>
