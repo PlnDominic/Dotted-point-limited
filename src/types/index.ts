@@ -3,9 +3,15 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  original_price?: number | null;
   image_url: string;
   category: string;
   stock: number;
+  product_type: "material" | "service";
+  sold_count?: string | null;
+  rating?: number | null;
+  reviews_count?: number | null;
+  cta_label?: string | null;
   created_at: string;
 }
 
@@ -40,4 +46,32 @@ export interface Profile {
   email: string;
   full_name: string;
   created_at: string;
+}
+
+export interface RecentWorkItem {
+  id: string;
+  title: string;
+  tag: string;
+  image_url: string;
+  created_at: string;
+}
+
+export interface Capability {
+  id: string;
+  name: string;
+  image_url: string;
+  rating: string;
+  rating_label: string;
+  description: string;
+  created_at: string;
+}
+
+export interface HeroContent {
+  id: number;
+  image_url: string;
+  headline: string;
+  subtext: string;
+  cta_label: string;
+  cta_href: string;
+  updated_at: string;
 }

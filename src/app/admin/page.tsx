@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Product } from "@/types";
+import type { Product, RecentWorkItem, Capability, HeroContent } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,22 +33,48 @@ const CATEGORIES = [
   { value: "hardware", label: "Hardware" },
 ];
 
+const EMPTY_PRODUCT_FORM = {
+  id: "",
+  name: "",
+  description: "",
+  price: 0,
+  original_price: 0,
+  image_url: "",
+  image_file: null as File | null,
+  category: "",
+  stock: 0,
+  product_type: "material" as "material" | "service",
+  sold_count: "",
+  rating: 0,
+  reviews_count: 0,
+  cta_label: "View Service",
+};
+
+const EMPTY_RECENT_WORK_FORM = {
+  id: "",
+  title: "",
+  tag: "",
+  image_url: "",
+  image_file: null as File | null,
+};
+
+const EMPTY_CAPABILITY_FORM = {
+  id: "",
+  name: "",
+  image_url: "",
+  image_file: null as File | null,
+  rating: "",
+  rating_label: "",
+  description: "",
+};
+
+type Tab = "products" | "recent-work" | "capabilities" | "hero";
+
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
-  const [form, setForm] = useState({
-    id: "",
-    name: "",
-    description: "",
-    price: 0,
-    image_url: "",
-    image_file: null as File | null,
-    category: "",
-    stock: 0,
-  });
+  const [tab, setTab] = useState<Tab>("products");
   const supabase = createClient();
 
   useEffect(() => {
@@ -74,80 +100,21 @@ export default function AdminPanel() {
         .eq("email", user.email)
         .maybeSingle();
       setIsAdmin(!!data);
-      if (data) {
-        fetchProducts();
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     }
     checkAdmin();
   }, [user]);
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.error(error);
-    else setProducts(data ?? []);
-    setLoading(false);
-  };
-
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const supabase = createClient();
-    let imagePath = form.image_url;
-    
-    if (form.image_file) {
-      const { data, error } = await supabase.storage
-        .from("products")
-        .upload(`${form.id || Date.now()}-${form.name.replace(/\s+/g, "-")}.jpg`, form.image_file);
-      if (error) console.error("Upload error:", error);
-      else {
-        const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(data.path);
-        imagePath = publicUrl;
-      }
+  async function uploadImage(file: File, folder: string): Promise<string | null> {
+    const path = `${folder}/${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    const { data, error } = await supabase.storage.from("products").upload(path, file);
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
     }
-    
-    const productData = {
-      ...form,
-      image_url: imagePath,
-    };
-    
-    if (mode === "add") {
-      const { error } = await supabase.from("products").insert([productData]);
-      if (error) console.error(error);
-    } else if (mode === "edit" && form.id) {
-      const { error } = await supabase
-        .from("products")
-        .update(productData)
-        .eq("id", form.id);
-      if (error) console.error(error);
-    }
-    setMode("view");
-    setForm({
-      id: "",
-      name: "",
-      description: "",
-      price: 0,
-      image_url: "",
-      image_file: null as File | null,
-      category: "",
-      stock: 0,
-    });
-    fetchProducts();
-  };
-
-  const editProduct = (product: Product) => {
-    setForm({ ...product, image_file: null });
-    setMode("edit");
-  };
-
-  const deleteProduct = async (id: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) console.error(error);
-    fetchProducts();
-  };
+    const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(data.path);
+    return publicUrl;
+  }
 
   if (loading || !user || !isAdmin) {
     return (
@@ -181,8 +148,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     );
   }
 
+  const TABS: { value: Tab; label: string }[] = [
+    { value: "products", label: "Products" },
+    { value: "recent-work", label: "Recent Work" },
+    { value: "capabilities", label: "What We Do Best" },
+    { value: "hero", label: "Homepage Hero" },
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-[1300px] mx-auto px-6 h-[64px] flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -200,109 +174,236 @@ const handleSubmit = async (e: React.FormEvent) => {
               Logged in as: {user.email ?? "unknown"}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="text-gray-500 hover:text-black px-4 py-2 rounded text-[13px] hover:bg-gray-100 transition-colors"
+            aria-label="Sign out"
+          >
+            Sign Out
+          </button>
+        </div>
+        <div className="max-w-[1300px] mx-auto px-6 flex gap-1 border-t border-gray-50">
+          {TABS.map((t) => (
             <button
-              onClick={() => setMode("add")}
-              className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors"
-              aria-label="Add product"
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={`px-4 py-3 text-[13px] font-semibold border-b-2 transition-colors ${
+                tab === t.value
+                  ? "border-[var(--color-brand)] text-[#171717]"
+                  : "border-transparent text-gray-500 hover:text-[#171717]"
+              }`}
             >
-              Add Product
+              {t.label}
             </button>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="text-gray-500 hover:text-black px-4 py-2 rounded text-[13px] hover:bg-gray-100 transition-colors"
-              aria-label="Sign out"
-            >
-              Sign Out
-            </button>
-          </div>
+          ))}
         </div>
       </nav>
 
       <main className="max-w-[1300px] mx-auto px-6 py-8">
-        {/* Products Form */}
-        {mode !== "view" && (
-          <div className="bg-white rounded-xl p-6 mb-8 shadow-md">
-            <h2 className="font-[var(--font-heading)] text-[24px] mb-4">
-              {mode === "add" ? "Add New Product" : "Edit Product"}
-            </h2>
-            <form onSubmit={handleSubmit} className="grid gap-4">
+        {tab === "products" && <ProductsTab supabase={supabase} uploadImage={uploadImage} />}
+        {tab === "recent-work" && <RecentWorkTab supabase={supabase} uploadImage={uploadImage} />}
+        {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
+        {tab === "hero" && <HeroTab supabase={supabase} uploadImage={uploadImage} />}
+      </main>
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Products ═══════════════════════════ */
+
+function ProductsTab({
+  supabase,
+  uploadImage,
+}: {
+  supabase: ReturnType<typeof createClient>;
+  uploadImage: (file: File, folder: string) => Promise<string | null>;
+}) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [form, setForm] = useState(EMPTY_PRODUCT_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchProducts() {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setProducts(data ?? []);
+    setLoading(false);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    let imageUrl = form.image_url;
+
+    if (form.image_file) {
+      const uploaded = await uploadImage(form.image_file, "products");
+      if (uploaded) imageUrl = uploaded;
+    }
+
+    const productData = {
+      name: form.name,
+      description: form.description,
+      price: form.price,
+      original_price: form.product_type === "material" ? form.original_price || form.price : null,
+      image_url: imageUrl,
+      category: form.category,
+      stock: form.stock,
+      product_type: form.product_type,
+      sold_count: form.product_type === "material" ? form.sold_count : null,
+      rating: form.product_type === "material" ? form.rating : null,
+      reviews_count: form.product_type === "material" ? form.reviews_count : null,
+      cta_label: form.product_type === "service" ? form.cta_label : null,
+    };
+
+    const { error } =
+      mode === "add"
+        ? await supabase.from("products").insert([productData])
+        : await supabase.from("products").update(productData).eq("id", form.id);
+
+    if (error) console.error(error);
+    setSaving(false);
+    setMode("view");
+    setForm(EMPTY_PRODUCT_FORM);
+    fetchProducts();
+  }
+
+  function editProduct(product: Product) {
+    setForm({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      original_price: product.original_price ?? product.price,
+      image_url: product.image_url,
+      image_file: null,
+      category: product.category,
+      stock: product.stock,
+      product_type: product.product_type,
+      sold_count: product.sold_count ?? "",
+      rating: product.rating ?? 0,
+      reviews_count: product.reviews_count ?? 0,
+      cta_label: product.cta_label ?? "View Service",
+    });
+    setMode("edit");
+  }
+
+  async function deleteProduct(id: string) {
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) console.error(error);
+    fetchProducts();
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+            Products
+          </h2>
+          <p className="text-[13px] text-gray-500">
+            Materials show in the homepage&apos;s &quot;Amazing offer&quot; grid and
+            services show in &quot;Our Services &amp; Supplies&quot; — both also
+            list on /products.
+          </p>
+        </div>
+        {mode === "view" && (
+          <button
+            onClick={() => setMode("add")}
+            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+          >
+            Add Product
+          </button>
+        )}
+      </div>
+
+      {mode !== "view" && (
+        <div className="bg-white rounded-xl p-6 mb-8 shadow-md">
+          <h3 className="font-[var(--font-heading)] text-[18px] mb-4">
+            {mode === "add" ? "Add New Product" : "Edit Product"}
+          </h3>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="flex gap-2">
+              {(["material", "service"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, product_type: t }))}
+                  className={`px-4 py-2 rounded text-[13px] font-semibold ${
+                    form.product_type === t
+                      ? "bg-[#171717] text-white"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {t === "material" ? "Material (priced)" : "Service (tile)"}
+                </button>
+              ))}
+            </div>
+
+            <input
+              placeholder="Product name"
+              value={form.name}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+            <textarea
+              placeholder="Description"
+              value={form.description}
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+            />
+
+            <div>
+              <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
               <input
-                type="hidden"
-                value={form.id}
-                onChange={(e) => setForm((prev) => ({ ...prev, id: e.target.value }))}
-                disabled={mode === "add"}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+                className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
               />
-              <input
-                placeholder="Product name"
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                required
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
-              <textarea
-                placeholder="Product description"
-                value={form.description}
-                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
-              />
+              {(form.image_file || form.image_url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
+                  alt="Preview"
+                  className="w-24 h-24 object-cover rounded mt-2"
+                />
+              )}
+            </div>
+
+            <select
+              value={form.category}
+              onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            >
+              <option value="">Select a category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="grid grid-cols-2 gap-4">
               <input
                 type="number"
+                step="0.01"
                 placeholder="Price (GH₵)"
                 value={form.price}
                 onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
-              <div>
-                <label className="text-[12px] text-gray-500 mb-1 block">
-                  Product Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
-                  className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer hidden sm:block"
-                />
-                <span
-                  className="text-[12px] text-gray-400"
-                >
-                  {form.image_url ? (form.image_file ? "Preview available" : "Add image from URL") : "Add image from URL"}
-                </span>
-                {form.image_file && (
-                  <div className="mt-2">
-                    <img
-                      src={URL.createObjectURL(form.image_file)}
-                      alt="Preview"
-                      className="w-24 h-24 object-cover rounded mb-2"
-                    />
-                    <button
-                      onClick={() =>
-                        setForm((prev) => ({
-                          ...prev,
-                          image_file: null,
-                          image_url: "",
-                        }))
-                      }
-                      className="text-[10px] text-red-500 hover:text-black"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-              <select
-                value={form.category}
-                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              >
-                <option value="">Select a category</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
               <input
                 type="number"
                 placeholder="Stock quantity"
@@ -311,83 +412,686 @@ const handleSubmit = async (e: React.FormEvent) => {
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
-              <div className="flex gap-3">
+            </div>
+
+            {form.product_type === "material" ? (
+              <>
+                <p className="text-[12px] text-gray-400 -mb-2">
+                  Shown on the homepage&apos;s Amazing Offer card
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Original price (for discount badge, optional)"
+                    value={form.original_price}
+                    onChange={(e) => setForm((prev) => ({ ...prev, original_price: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded text-[14px]"
+                  />
+                  <input
+                    placeholder="Sold count text, e.g. 8.2K+"
+                    value={form.sold_count}
+                    onChange={(e) => setForm((prev) => ({ ...prev, sold_count: e.target.value }))}
+                    className="w-full px-3 py-2 border rounded text-[14px]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    placeholder="Rating (0-5)"
+                    value={form.rating}
+                    onChange={(e) => setForm((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded text-[14px]"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Reviews count"
+                    value={form.reviews_count}
+                    onChange={(e) => setForm((prev) => ({ ...prev, reviews_count: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded text-[14px]"
+                  />
+                </div>
+              </>
+            ) : (
+              <input
+                placeholder="Button label, e.g. View Service"
+                value={form.cta_label}
+                onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-[var(--color-brand)] text-white py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : mode === "add" ? "Create" : "Update"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("view");
+                  setForm(EMPTY_PRODUCT_FORM);
+                }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2 rounded text-[13px] hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded h-48" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          No products found. Add your first product above.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {products.map((product) => (
+            <div key={product.id} className="product-card relative bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={product.image_url || "/placeholder.svg"}
+                alt={product.name}
+                className="w-full h-40 object-cover rounded-t"
+              />
+              <div className="p-3">
+                <span className="text-[10px] uppercase font-bold text-[var(--color-brand)]">
+                  {product.product_type}
+                </span>
+                <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
+                  {product.name}
+                </h3>
+                <p className="text-[12px] text-gray-400 capitalize mb-1">
+                  {product.category}
+                </p>
+                <p className="font-[var(--font-heading)] text-[15px] font-bold text-[#1a1a1a]">
+                  GH₵{product.price.toFixed(2)}
+                </p>
+                <p className="text-[11px] text-gray-400">Stock: {product.stock}</p>
+              </div>
+              <div className="absolute top-3 right-3 flex gap-2 bg-white/90 rounded px-2 py-1">
                 <button
-                  type="submit"
-                  className="flex-1 bg-[var(--color-brand)] text-white py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors"
+                  onClick={() => editProduct(product)}
+                  className="text-[12px] text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  {mode === "add" ? "Create" : "Update"}
+                  Edit
                 </button>
                 <button
-                  type="button"
-                  onClick={() => setMode("view")}
-                  className="flex-1 bg-gray-100 text-gray-700 py-2 rounded text-[13px] hover:bg-gray-200 transition-colors"
+                  onClick={() => deleteProduct(product.id)}
+                  className="text-[12px] text-red-600 hover:text-red-800 transition-colors"
                 >
-                  Cancel
+                  Delete
                 </button>
               </div>
-            </form>
-          </div>
-        )}
-
-        {/* Products Grid */}
-        <div>
-          <h2 className="font-[var(--font-heading)] text-[24px] mb-6 text-[#1a1a1a]">
-            Products Management
-          </h2>
-          {products.length === 0 ? (
-            <p className="text-gray-500 text-[14px] py-12 text-center">
-              No products found. Add your first product above.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className={`product-card relative group animate-slide-up`}
-                >
-                  <img
-                    src={product.image_url || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full h-40 object-cover rounded-t"
-                  />
-                  <div className="p-3">
-                    <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
-                      {product.name}
-                    </h3>
-                    <p className="text-[12px] text-gray-400 capitalize mb-1">
-                      {product.category}
-                    </p>
-                    <p className="font-[var(--font-heading)] text-[15px] font-bold text-[#1a1a1a]">
-                      GH₵{product.price.toFixed(2)}
-                    </p>
-                    <p className="text-[11px] text-gray-400">
-                      Stock: {product.stock}
-                    </p>
-                  </div>
-                  <div className="absolute top-3 right-3 flex gap-1">
-                    <button
-                      onClick={() => editProduct(product)}
-                      className="text-[12px] text-blue-600 hover:text-blue-800 transition-colors"
-                      aria-label="Edit product"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(product.id)}
-                      className="text-[12px] text-red-600 hover:text-red-800 transition-colors"
-                      aria-label="Delete product"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
+          ))}
         </div>
-      </main>
+      )}
     </div>
   );
 }
 
+/* ═══════════════════════════ Recent Work ═══════════════════════════ */
+
+function RecentWorkTab({
+  supabase,
+  uploadImage,
+}: {
+  supabase: ReturnType<typeof createClient>;
+  uploadImage: (file: File, folder: string) => Promise<string | null>;
+}) {
+  const [items, setItems] = useState<RecentWorkItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [form, setForm] = useState(EMPTY_RECENT_WORK_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchItems() {
+    const { data, error } = await supabase
+      .from("recent_work")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setItems(data ?? []);
+    setLoading(false);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    let imageUrl = form.image_url;
+    if (form.image_file) {
+      const uploaded = await uploadImage(form.image_file, "recent-work");
+      if (uploaded) imageUrl = uploaded;
+    }
+    const rowData = { title: form.title, tag: form.tag, image_url: imageUrl };
+
+    const { error } =
+      mode === "add"
+        ? await supabase.from("recent_work").insert([rowData])
+        : await supabase.from("recent_work").update(rowData).eq("id", form.id);
+
+    if (error) console.error(error);
+    setSaving(false);
+    setMode("view");
+    setForm(EMPTY_RECENT_WORK_FORM);
+    fetchItems();
+  }
+
+  function editItem(item: RecentWorkItem) {
+    setForm({ id: item.id, title: item.title, tag: item.tag, image_url: item.image_url, image_file: null });
+    setMode("edit");
+  }
+
+  async function deleteItem(id: string) {
+    const { error } = await supabase.from("recent_work").delete().eq("id", id);
+    if (error) console.error(error);
+    fetchItems();
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+            Recent Work
+          </h2>
+          <p className="text-[13px] text-gray-500">
+            Shows in the homepage&apos;s &quot;Recent Work&quot; portfolio grid.
+          </p>
+        </div>
+        {mode === "view" && (
+          <button
+            onClick={() => setMode("add")}
+            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+          >
+            Add Project
+          </button>
+        )}
+      </div>
+
+      {mode !== "view" && (
+        <div className="bg-white rounded-xl p-6 mb-8 shadow-md">
+          <h3 className="font-[var(--font-heading)] text-[18px] mb-4">
+            {mode === "add" ? "Add Project" : "Edit Project"}
+          </h3>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <input
+              placeholder="Title, e.g. Automated Gate Installation"
+              value={form.title}
+              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+            <input
+              placeholder="Tag, e.g. Residential"
+              value={form.tag}
+              onChange={(e) => setForm((prev) => ({ ...prev, tag: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+            <div>
+              <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+                className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
+              />
+              {(form.image_file || form.image_url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
+                  alt="Preview"
+                  className="w-24 h-24 object-cover rounded mt-2"
+                />
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-[var(--color-brand)] text-white py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : mode === "add" ? "Create" : "Update"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("view");
+                  setForm(EMPTY_RECENT_WORK_FORM);
+                }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2 rounded text-[13px] hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded h-48" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          No projects yet. Add your first one above.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {items.map((item) => (
+            <div key={item.id} className="product-card relative bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.image_url || "/placeholder.svg"}
+                alt={item.title}
+                className="w-full h-40 object-cover rounded-t"
+              />
+              <div className="p-3">
+                <p className="text-[10px] uppercase font-bold text-[var(--color-brand)]">{item.tag}</p>
+                <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
+                  {item.title}
+                </h3>
+              </div>
+              <div className="absolute top-3 right-3 flex gap-2 bg-white/90 rounded px-2 py-1">
+                <button onClick={() => editItem(item)} className="text-[12px] text-blue-600 hover:text-blue-800">
+                  Edit
+                </button>
+                <button onClick={() => deleteItem(item.id)} className="text-[12px] text-red-600 hover:text-red-800">
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Capabilities ═══════════════════════════ */
+
+function CapabilitiesTab({
+  supabase,
+  uploadImage,
+}: {
+  supabase: ReturnType<typeof createClient>;
+  uploadImage: (file: File, folder: string) => Promise<string | null>;
+}) {
+  const [items, setItems] = useState<Capability[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [form, setForm] = useState(EMPTY_CAPABILITY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchItems() {
+    const { data, error } = await supabase
+      .from("capabilities")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setItems(data ?? []);
+    setLoading(false);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    let imageUrl = form.image_url;
+    if (form.image_file) {
+      const uploaded = await uploadImage(form.image_file, "capabilities");
+      if (uploaded) imageUrl = uploaded;
+    }
+    const rowData = {
+      name: form.name,
+      image_url: imageUrl,
+      rating: form.rating,
+      rating_label: form.rating_label,
+      description: form.description,
+    };
+
+    const { error } =
+      mode === "add"
+        ? await supabase.from("capabilities").insert([rowData])
+        : await supabase.from("capabilities").update(rowData).eq("id", form.id);
+
+    if (error) console.error(error);
+    setSaving(false);
+    setMode("view");
+    setForm(EMPTY_CAPABILITY_FORM);
+    fetchItems();
+  }
+
+  function editItem(item: Capability) {
+    setForm({
+      id: item.id,
+      name: item.name,
+      image_url: item.image_url,
+      image_file: null,
+      rating: item.rating,
+      rating_label: item.rating_label,
+      description: item.description,
+    });
+    setMode("edit");
+  }
+
+  async function deleteItem(id: string) {
+    const { error } = await supabase.from("capabilities").delete().eq("id", id);
+    if (error) console.error(error);
+    fetchItems();
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+            What We Do Best
+          </h2>
+          <p className="text-[13px] text-gray-500">
+            The three capability cards on the homepage.
+          </p>
+        </div>
+        {mode === "view" && (
+          <button
+            onClick={() => setMode("add")}
+            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+          >
+            Add Capability
+          </button>
+        )}
+      </div>
+
+      {mode !== "view" && (
+        <div className="bg-white rounded-xl p-6 mb-8 shadow-md">
+          <h3 className="font-[var(--font-heading)] text-[18px] mb-4">
+            {mode === "add" ? "Add Capability" : "Edit Capability"}
+          </h3>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <input
+              placeholder="Name, e.g. Building & Fabrication"
+              value={form.name}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+            <textarea
+              placeholder="Description"
+              value={form.description}
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                placeholder="Stat, e.g. 500+"
+                value={form.rating}
+                onChange={(e) => setForm((prev) => ({ ...prev, rating: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+              <input
+                placeholder="Stat label, e.g. projects built"
+                value={form.rating_label}
+                onChange={(e) => setForm((prev) => ({ ...prev, rating_label: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+                className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
+              />
+              {(form.image_file || form.image_url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
+                  alt="Preview"
+                  className="w-24 h-24 object-cover rounded mt-2"
+                />
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-[var(--color-brand)] text-white py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : mode === "add" ? "Create" : "Update"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("view");
+                  setForm(EMPTY_CAPABILITY_FORM);
+                }}
+                className="flex-1 bg-gray-100 text-gray-700 py-2 rounded text-[13px] hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded h-48" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          No capabilities yet. Add your first one above.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((item) => (
+            <div key={item.id} className="product-card relative bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.image_url || "/placeholder.svg"}
+                alt={item.name}
+                className="w-full h-40 object-cover rounded-t"
+              />
+              <div className="p-3">
+                <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
+                  {item.name}
+                </h3>
+                <p className="text-[12px] text-gray-400 line-clamp-2 mb-1">{item.description}</p>
+                <p className="text-[13px] font-bold text-[var(--color-brand)]">
+                  {item.rating} <span className="text-gray-400 font-normal">{item.rating_label}</span>
+                </p>
+              </div>
+              <div className="absolute top-3 right-3 flex gap-2 bg-white/90 rounded px-2 py-1">
+                <button onClick={() => editItem(item)} className="text-[12px] text-blue-600 hover:text-blue-800">
+                  Edit
+                </button>
+                <button onClick={() => deleteItem(item.id)} className="text-[12px] text-red-600 hover:text-red-800">
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Hero ═══════════════════════════ */
+
+function HeroTab({
+  supabase,
+  uploadImage,
+}: {
+  supabase: ReturnType<typeof createClient>;
+  uploadImage: (file: File, folder: string) => Promise<string | null>;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState({
+    image_url: "",
+    image_file: null as File | null,
+    headline: "",
+    subtext: "",
+    cta_label: "",
+    cta_href: "",
+  });
+
+  useEffect(() => {
+    async function fetchHero() {
+      const { data, error } = await supabase
+        .from("hero_content")
+        .select("*")
+        .eq("id", 1)
+        .maybeSingle<HeroContent>();
+      if (error) console.error(error);
+      if (data) {
+        setForm({
+          image_url: data.image_url,
+          image_file: null,
+          headline: data.headline,
+          subtext: data.subtext,
+          cta_label: data.cta_label,
+          cta_href: data.cta_href,
+        });
+      }
+      setLoading(false);
+    }
+    fetchHero();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setSaved(false);
+    let imageUrl = form.image_url;
+    if (form.image_file) {
+      const uploaded = await uploadImage(form.image_file, "hero");
+      if (uploaded) imageUrl = uploaded;
+    }
+    const { error } = await supabase
+      .from("hero_content")
+      .upsert({
+        id: 1,
+        image_url: imageUrl,
+        headline: form.headline,
+        subtext: form.subtext,
+        cta_label: form.cta_label,
+        cta_href: form.cta_href,
+        updated_at: new Date().toISOString(),
+      });
+    if (error) console.error(error);
+    else {
+      setForm((prev) => ({ ...prev, image_url: imageUrl, image_file: null }));
+      setSaved(true);
+    }
+    setSaving(false);
+  }
+
+  if (loading) {
+    return <div className="animate-pulse bg-white rounded h-64" />;
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+          Homepage Hero
+        </h2>
+        <p className="text-[13px] text-gray-500">
+          The full-bleed banner at the top of the homepage.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-md max-w-xl">
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div>
+            <label className="text-[12px] text-gray-500 mb-1 block">Background image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+              className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
+            />
+            {(form.image_file || form.image_url) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
+                alt="Preview"
+                className="w-full h-32 object-cover rounded mt-2"
+              />
+            )}
+          </div>
+          <input
+            placeholder="Headline"
+            value={form.headline}
+            onChange={(e) => setForm((prev) => ({ ...prev, headline: e.target.value }))}
+            required
+            className="w-full px-3 py-2 border rounded text-[14px]"
+          />
+          <textarea
+            placeholder="Subtext"
+            value={form.subtext}
+            onChange={(e) => setForm((prev) => ({ ...prev, subtext: e.target.value }))}
+            className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              placeholder="Button label, e.g. Shop Now"
+              value={form.cta_label}
+              onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+            <input
+              placeholder="Button link, e.g. /products"
+              value={form.cta_href}
+              onChange={(e) => setForm((prev) => ({ ...prev, cta_href: e.target.value }))}
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-[var(--color-brand)] text-white py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Hero"}
+          </button>
+          {saved && (
+            <p className="text-[12px] text-green-600 text-center">Saved — live on the homepage now.</p>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}

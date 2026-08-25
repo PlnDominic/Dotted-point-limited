@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-/* ─── Data ─── */
+/* ─── Category filter — homepage navigation chrome, not admin content ─── */
 const homeCategories = [
   { label: "Automated Gates", slug: "automated-gates" },
   { label: "Roller Shutters", slug: "roller-shutters" },
@@ -23,59 +24,52 @@ const homeCategories = [
   { label: "Curtain Walls", slug: "curtain-walls" },
 ];
 
-const services = [
-  { name: "Automated Gates", slug: "automated-gates", image: "/images/services/automated-gates.jpg", desc: "Motorized swing & sliding gates with remote access control.", cta: "View Service" },
-  { name: "Garage Roller Shutters", slug: "roller-shutters", image: "/images/services/roller-shutters.jpg", desc: "Durable roller shutters for garages, shops and warehouses.", cta: "View Service" },
-  { name: "Iron Mongering", slug: "iron-mongering", image: "/images/services/iron-mongering.jpg", desc: "Custom wrought iron gates, rails, grilles and fabrication.", cta: "View Service" },
-  { name: "Plasterboard Ceiling", slug: "plasterboard-ceiling", image: "/images/services/plasterboard-ceiling.jpg", desc: "Suspended and plasterboard ceilings with clean, modern finishes.", cta: "View Service" },
-  { name: "Painting & Decoration", slug: "painting-decoration", image: "/images/services/painting-decoration.jpg", desc: "Interior and exterior painting, finishing and decoration.", cta: "View Service" },
-  { name: "Kitchen Cabinets", slug: "kitchen-cabinets", image: "/images/services/kitchen-cabinets.jpg", desc: "Bespoke fitted kitchen cabinets built to your space.", cta: "View Service" },
-];
+/* ─── Fallbacks — used only if Supabase returns nothing (e.g. offline) ─── */
+const fallbackHero = {
+  image: "/images/services/hero-main.png",
+  headline: "Building & Fabrication",
+  subtext: "Gates, roofing sheets, kitchen cabinets & every material to build your home",
+  ctaLabel: "Shop Now",
+  ctaHref: "/products",
+};
 
-const buildingMaterials = [
-  { name: "Modified Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Modified concrete blocks for walls and fencing, priced per block.", price: 25.0, originalPrice: 25.0, sold: "15K+", rating: 4.5, reviews: 2034 },
-  { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings.", price: 145.0, originalPrice: 210.0, sold: "6.4K+", rating: 4.4, reviews: 762 },
-  { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.png", desc: "Ceramic & porcelain floor tiles, adhesive and grout.", price: 108.49, originalPrice: 193.99, sold: "15K+", rating: 4.6, reviews: 1173 },
-  { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage.", price: 24.99, originalPrice: 39.99, sold: "12K+", rating: 4.5, reviews: 1301 },
-  { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories.", price: 54.78, originalPrice: 98.51, sold: "15K+", rating: 4.5, reviews: 887 },
-  { name: "Kitchen Sinks", slug: "kitchen-sinks", image: "/images/services/kitchen-sinks.jpg", desc: "Stainless steel & granite kitchen sinks and taps for sale.", price: 326.71, originalPrice: 596.8, sold: "7K+", rating: 4.7, reviews: 815 },
-  { name: "Bathroom Fittings", slug: "bathroom-fittings", image: "/images/services/bathroom-fittings.jpg", desc: "WC, baths, wash basins and taps for sale.", price: 435.39, originalPrice: 796.61, sold: "3.7K+", rating: 4.6, reviews: 166 },
-  { name: "Water Tanks", slug: "water-tanks", image: "/images/materials/water-tanks.jpg", desc: "Polytanks and water storage tanks for homes & sites.", price: 39.32, originalPrice: 71.02, sold: "19K+", rating: 4.1, reviews: 769 },
-  { name: "Switches & Sockets", slug: "switches-sockets", image: "/images/materials/switches-sockets.jpg", desc: "Wall switches, sockets and electrical accessories.", price: 18.99, originalPrice: 32.99, sold: "10K+", rating: 4.4, reviews: 640 },
-];
+type Material = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  desc: string;
+  price: number;
+  originalPrice: number;
+  sold: string;
+  rating: number;
+  reviews: number;
+};
 
-const capabilities = [
-  {
-    name: "Building & Fabrication",
-    image: "/images/services/fabrication.jpg",
-    rating: "500+",
-    ratingLabel: "projects built",
-    desc: "From structural builds to custom metal fabrication, executed to spec and built to last.",
-  },
-  {
-    name: "Interior Finishing & Consulting",
-    image: "/images/services/kitchen-cabinets.jpg",
-    rating: "10+",
-    ratingLabel: "years experience",
-    desc: "Full interior fit-outs, building finishing and expert project consulting from start to handover.",
-  },
-  {
-    name: "Gate & Shutter Automation",
-    image: "/images/services/automated-gates.jpg",
-    rating: "24/7",
-    ratingLabel: "site support",
-    desc: "Automated gates, roller shutters and access control systems installed, wired and serviced.",
-  },
-];
+type Service = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  desc: string;
+  cta: string;
+};
 
-const recentWork = [
-  { title: "Automated Gate Installation", tag: "Residential", image: "/images/services/automated-gates.jpg" },
-  { title: "Roller Shutter Fit-Out", tag: "Commercial", image: "/images/services/roller-shutters.jpg" },
-  { title: "Ornamental Iron Gate", tag: "Fabrication", image: "/images/services/iron-mongering.jpg" },
-  { title: "Plasterboard Ceiling", tag: "Renovation", image: "/images/services/plasterboard-ceiling.jpg" },
-  { title: "Full Interior Repaint", tag: "Residential", image: "/images/services/painting-decoration.jpg" },
-  { title: "Fitted Kitchen Cabinets", tag: "Interior", image: "/images/services/kitchen-cabinets.jpg" },
-];
+type Capability = {
+  id: string;
+  name: string;
+  image: string;
+  rating: string;
+  ratingLabel: string;
+  desc: string;
+};
+
+type RecentWork = {
+  id: string;
+  title: string;
+  tag: string;
+  image: string;
+};
 
 function formatGHS(value: number) {
   return `GH₵${value.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -107,6 +101,102 @@ function StarRating({ rating }: { rating: number }) {
 export default function Home() {
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [hero, setHero] = useState(fallbackHero);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [recentWork, setRecentWork] = useState<RecentWork[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadContent() {
+      const [productsRes, capabilitiesRes, recentWorkRes, heroRes] =
+        await Promise.all([
+          supabase
+            .from("products")
+            .select("*")
+            .in("product_type", ["material", "service"])
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("capabilities")
+            .select("*")
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("recent_work")
+            .select("*")
+            .order("created_at", { ascending: true }),
+          supabase.from("hero_content").select("*").eq("id", 1).maybeSingle(),
+        ]);
+
+      const products = productsRes.data ?? [];
+
+      setMaterials(
+        products
+          .filter((p) => p.product_type === "material")
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.category,
+            image: p.image_url,
+            desc: p.description,
+            price: p.price,
+            originalPrice: p.original_price ?? p.price,
+            sold: p.sold_count ?? "",
+            rating: p.rating ?? 0,
+            reviews: p.reviews_count ?? 0,
+          }))
+      );
+
+      setServices(
+        products
+          .filter((p) => p.product_type === "service")
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.category,
+            image: p.image_url,
+            desc: p.description,
+            cta: p.cta_label || "View Service",
+          }))
+      );
+
+      setCapabilities(
+        (capabilitiesRes.data ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          image: c.image_url,
+          rating: c.rating,
+          ratingLabel: c.rating_label,
+          desc: c.description,
+        }))
+      );
+
+      setRecentWork(
+        (recentWorkRes.data ?? []).map((r) => ({
+          id: r.id,
+          title: r.title,
+          tag: r.tag,
+          image: r.image_url,
+        }))
+      );
+
+      if (heroRes.data) {
+        setHero({
+          image: heroRes.data.image_url || fallbackHero.image,
+          headline: heroRes.data.headline || fallbackHero.headline,
+          subtext: heroRes.data.subtext || fallbackHero.subtext,
+          ctaLabel: heroRes.data.cta_label || fallbackHero.ctaLabel,
+          ctaHref: heroRes.data.cta_href || fallbackHero.ctaHref,
+        });
+      }
+
+      setLoading(false);
+    }
+
+    loadContent();
+  }, []);
 
   function toggleLike(id: string) {
     setLiked((prev) => {
@@ -119,8 +209,8 @@ export default function Home() {
 
   const filteredMaterials =
     activeCategory === "all"
-      ? buildingMaterials
-      : buildingMaterials.filter((m) => m.slug === activeCategory);
+      ? materials
+      : materials.filter((m) => m.slug === activeCategory);
 
   const filteredServices =
     activeCategory === "all"
@@ -134,7 +224,7 @@ export default function Home() {
         {/* Full-bleed background image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/services/hero-main.png"
+          src={hero.image}
           alt="Modern two-storey house with automated gate and driveway"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -144,14 +234,13 @@ export default function Home() {
         {/* Text overlay */}
         <div className="relative z-10 h-full max-w-[1300px] mx-auto px-6 flex flex-col items-center justify-center text-center animate-slide-up">
           <h1 className="font-[var(--font-heading)] text-[22px] sm:text-[28px] font-[800] tracking-tight leading-[1.15] text-white mb-2 uppercase drop-shadow-md">
-            Building &amp; Fabrication
+            {hero.headline}
           </h1>
           <p className="text-white/90 text-[12px] sm:text-[14px] leading-relaxed mb-4 max-w-[380px] drop-shadow-md">
-            Gates, roofing sheets, kitchen cabinets &amp; every material to
-            build your home
+            {hero.subtext}
           </p>
-          <Link href="/products" className="btn-dark">
-            Shop Now
+          <Link href={hero.ctaHref} className="btn-dark">
+            {hero.ctaLabel}
           </Link>
         </div>
       </section>
@@ -202,7 +291,19 @@ export default function Home() {
             </svg>
           </Link>
         </div>
-        {filteredMaterials.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-square bg-gray-100" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredMaterials.length === 0 ? (
           <p className="text-[13px] text-gray-400 py-8 text-center">
             No offers in this category yet - check back soon.
           </p>
@@ -293,7 +394,13 @@ export default function Home() {
             </svg>
           </Link>
         </div>
-        {filteredServices.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="aspect-square bg-gray-100 animate-pulse rounded-2xl" />
+            ))}
+          </div>
+        ) : filteredServices.length === 0 ? (
           <p className="text-[13px] text-gray-400 py-8 text-center">
             No services in this category yet - check back soon.
           </p>
@@ -339,24 +446,36 @@ export default function Home() {
             View Full Portfolio
           </Link>
         </div>
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-square bg-gray-100" />
+                <div className="p-3 md:p-4">
+                  <div className="h-3 bg-gray-100 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
           {recentWork.map((item, i) => (
             <div
-              key={item.title}
+              key={item.id}
               className={`product-card relative group animate-slide-up delay-${i + 1}`}
             >
               <span className="tag-badge new">{item.tag}</span>
               <button
-                onClick={() => toggleLike(item.title)}
-                className={`heart-btn ${liked.has(item.title) ? "active" : ""}`}
+                onClick={() => toggleLike(item.id)}
+                className={`heart-btn ${liked.has(item.id) ? "active" : ""}`}
                 aria-label="Save project"
               >
                 <svg
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
-                  fill={liked.has(item.title) ? "#ef4444" : "none"}
-                  stroke={liked.has(item.title) ? "#ef4444" : "#999"}
+                  fill={liked.has(item.id) ? "#ef4444" : "none"}
+                  stroke={liked.has(item.id) ? "#ef4444" : "#999"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -382,6 +501,7 @@ export default function Home() {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       {/* ═══════ WHAT WE DO BEST ═══════ */}
@@ -391,10 +511,24 @@ export default function Home() {
             What We Do Best
           </h2>
         </div>
+        {loading ? (
+          <div className="grid md:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="product-card p-4 flex gap-4 items-center animate-pulse">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-100 rounded w-2/3" />
+                  <div className="h-3 bg-gray-100 rounded w-full" />
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid md:grid-cols-3 gap-5">
           {capabilities.map((item, i) => (
             <div
-              key={item.name}
+              key={item.id}
               className={`product-card p-4 flex gap-4 items-center animate-slide-up delay-${i + 1}`}
             >
               <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden bg-[#f8f8f8]">
@@ -422,6 +556,7 @@ export default function Home() {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       {/* ═══════ CONSULTATION + PORTFOLIO CTA ═══════ */}

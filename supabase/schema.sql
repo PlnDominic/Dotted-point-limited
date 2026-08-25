@@ -190,22 +190,166 @@ CREATE POLICY "Admins can delete product images"
   USING (bucket_id = 'products' AND is_admin());
 
 -- ============================================
--- Sample Products — Construction & Home Improvement
--- (skipped automatically if products already exist)
+-- Products: homepage material/service fields
+-- ============================================
+-- The homepage's "Amazing offer" (materials) and "Our Services &
+-- Supplies" (services) sections are driven by this same products
+-- table, distinguished by product_type. Adding/editing/deleting a
+-- product in /admin now shows up on the homepage AND /products.
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price DECIMAL(10,2);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_count TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS reviews_count INTEGER DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'material';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS cta_label TEXT DEFAULT 'View Service';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'products_product_type_check'
+  ) THEN
+    ALTER TABLE products
+      ADD CONSTRAINT products_product_type_check
+      CHECK (product_type IN ('material', 'service'));
+  END IF;
+END $$;
+
+-- ============================================
+-- Recent Work — homepage portfolio section
 -- ============================================
 
-INSERT INTO products (name, description, price, image_url, category, stock)
+CREATE TABLE IF NOT EXISTS recent_work (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  tag TEXT NOT NULL DEFAULT '',
+  image_url TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE recent_work ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Recent work is viewable by everyone" ON recent_work;
+DROP POLICY IF EXISTS "Admins can insert recent work" ON recent_work;
+DROP POLICY IF EXISTS "Admins can update recent work" ON recent_work;
+DROP POLICY IF EXISTS "Admins can delete recent work" ON recent_work;
+
+CREATE POLICY "Recent work is viewable by everyone"
+  ON recent_work FOR SELECT USING (true);
+CREATE POLICY "Admins can insert recent work"
+  ON recent_work FOR INSERT WITH CHECK (is_admin());
+CREATE POLICY "Admins can update recent work"
+  ON recent_work FOR UPDATE USING (is_admin());
+CREATE POLICY "Admins can delete recent work"
+  ON recent_work FOR DELETE USING (is_admin());
+
+-- ============================================
+-- Capabilities — homepage "What We Do Best" section
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS capabilities (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  image_url TEXT DEFAULT '',
+  rating TEXT DEFAULT '',
+  rating_label TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE capabilities ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Capabilities are viewable by everyone" ON capabilities;
+DROP POLICY IF EXISTS "Admins can insert capabilities" ON capabilities;
+DROP POLICY IF EXISTS "Admins can update capabilities" ON capabilities;
+DROP POLICY IF EXISTS "Admins can delete capabilities" ON capabilities;
+
+CREATE POLICY "Capabilities are viewable by everyone"
+  ON capabilities FOR SELECT USING (true);
+CREATE POLICY "Admins can insert capabilities"
+  ON capabilities FOR INSERT WITH CHECK (is_admin());
+CREATE POLICY "Admins can update capabilities"
+  ON capabilities FOR UPDATE USING (is_admin());
+CREATE POLICY "Admins can delete capabilities"
+  ON capabilities FOR DELETE USING (is_admin());
+
+-- ============================================
+-- Hero content — homepage hero banner (single row, id always 1)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS hero_content (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  image_url TEXT DEFAULT '',
+  headline TEXT DEFAULT '',
+  subtext TEXT DEFAULT '',
+  cta_label TEXT DEFAULT 'Shop Now',
+  cta_href TEXT DEFAULT '/products',
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT hero_content_singleton CHECK (id = 1)
+);
+
+ALTER TABLE hero_content ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Hero content is viewable by everyone" ON hero_content;
+DROP POLICY IF EXISTS "Admins can insert hero content" ON hero_content;
+DROP POLICY IF EXISTS "Admins can update hero content" ON hero_content;
+
+CREATE POLICY "Hero content is viewable by everyone"
+  ON hero_content FOR SELECT USING (true);
+CREATE POLICY "Admins can insert hero content"
+  ON hero_content FOR INSERT WITH CHECK (is_admin());
+CREATE POLICY "Admins can update hero content"
+  ON hero_content FOR UPDATE USING (is_admin());
+
+-- ============================================
+-- Seed data — the site's real current content
+-- (each block only runs once, guarded by its own existence check)
+-- ============================================
+
+INSERT INTO products (name, description, price, original_price, image_url, category, stock, product_type, sold_count, rating, reviews_count)
 SELECT * FROM (VALUES
-  ('DeWalt 20V MAX Cordless Drill', 'Brushless motor, 3-speed transmission, 650 in-lbs torque. Includes 2 batteries and charger.', 179.99, '', 'power-tools', 45),
-  ('Makita 7-1/4" Circular Saw', '15 AMP motor, 5,800 RPM, magnesium shoe. Lightweight at 10.6 lbs for all-day use.', 149.00, '', 'power-tools', 32),
-  ('3M Hard Hat H-700 Series', 'Ratchet adjustment, unvented shell. Meets ANSI Z89.1-2014 Type I, Class E standards.', 24.99, '', 'safety', 120),
-  ('Milwaukee 25 ft Tape Measure', 'Nylon bond blade, 2-point pulse magnets, 2X reach. Double-sided markings.', 29.97, '', 'hardware', 85),
-  ('SharkBite 1/2 in. Push-to-Connect Coupling', 'Brass construction, fits copper/CPVC/PEX. No soldering, crimping, or gluing required.', 8.98, '', 'plumbing-electrical', 300),
-  ('Leviton 15A Decora Outlet (10-Pack)', 'Tamper-resistant, self-grounding. UL Listed, meets NEC requirements.', 18.47, '', 'plumbing-electrical', 150),
-  ('Klein Tools 11-in-1 Multi-Bit Screwdriver', 'Industrial-strength handles, cushion-grip. Includes Phillips, flat, nut drivers, and more.', 19.97, '', 'hardware', 95),
-  ('Gorilla Wood Glue 16 oz.', 'Waterproof formula, 80 PSI strength. Sands and stains easily. 20-min clamp time.', 9.48, '', 'hardware', 175),
-  ('DEWALT Safety Glasses, Clear Lens', 'Anti-fog, scratch-resistant coating. Lightweight with rubber-tipped temples.', 7.98, '', 'safety', 250),
-  ('Oatey 4 in. Floor Drain with Trap', 'ABS construction, 1/2 in. thread connection. Includes removable sediment bucket.', 14.29, '', 'plumbing-electrical', 60),
-  ('Modified Concrete Block', 'Concrete block modified for construction, price 25 Cedis each', 25.00, '', 'building-materials', 100)
-) AS seed(name, description, price, image_url, category, stock)
-WHERE NOT EXISTS (SELECT 1 FROM products);
+  ('Modified Blocks', 'Modified concrete blocks for walls and fencing, priced per block.', 25.00, 25.00, '/images/materials/concrete-blocks.jpg', 'concrete-blocks', 500, 'material', '15K+', 4.5, 2034),
+  ('Roofing Sheets', 'Aluminium & corrugated roofing sheets, nails and fittings.', 145.00, 210.00, '/images/materials/roofing-sheets.jpg', 'roofing-sheets', 200, 'material', '6.4K+', 4.4, 762),
+  ('Floor Tiles', 'Ceramic & porcelain floor tiles, adhesive and grout.', 108.49, 193.99, '/images/materials/floor-tiles.png', 'floor-tiles', 300, 'material', '15K+', 4.6, 1173),
+  ('Plumbing Pipes & Fittings', 'PVC pipes, elbows, tees and fittings for water & drainage.', 24.99, 39.99, '/images/materials/plumbing-pipes.jpg', 'plumbing-pipes', 400, 'material', '12K+', 4.5, 1301),
+  ('Electrical Cables', 'Wiring cables, conduit and electrical accessories.', 54.78, 98.51, '/images/materials/electrical-cables.jpg', 'electrical-cables', 300, 'material', '15K+', 4.5, 887),
+  ('Kitchen Sinks', 'Stainless steel & granite kitchen sinks and taps for sale.', 326.71, 596.80, '/images/services/kitchen-sinks.jpg', 'kitchen-sinks', 80, 'material', '7K+', 4.7, 815),
+  ('Bathroom Fittings', 'WC, baths, wash basins and taps for sale.', 435.39, 796.61, '/images/services/bathroom-fittings.jpg', 'bathroom-fittings', 60, 'material', '3.7K+', 4.6, 166),
+  ('Water Tanks', 'Polytanks and water storage tanks for homes & sites.', 39.32, 71.02, '/images/materials/water-tanks.jpg', 'water-tanks', 150, 'material', '19K+', 4.1, 769),
+  ('Switches & Sockets', 'Wall switches, sockets and electrical accessories.', 18.99, 32.99, '/images/materials/switches-sockets.jpg', 'switches-sockets', 500, 'material', '10K+', 4.4, 640)
+) AS seed(name, description, price, original_price, image_url, category, stock, product_type, sold_count, rating, reviews_count)
+WHERE NOT EXISTS (SELECT 1 FROM products WHERE product_type = 'material');
+
+INSERT INTO products (name, description, price, image_url, category, stock, product_type, cta_label)
+SELECT * FROM (VALUES
+  ('Automated Gates', 'Motorized swing & sliding gates with remote access control.', 0, '/images/services/automated-gates.jpg', 'automated-gates', 0, 'service', 'View Service'),
+  ('Garage Roller Shutters', 'Durable roller shutters for garages, shops and warehouses.', 0, '/images/services/roller-shutters.jpg', 'roller-shutters', 0, 'service', 'View Service'),
+  ('Iron Mongering', 'Custom wrought iron gates, rails, grilles and fabrication.', 0, '/images/services/iron-mongering.jpg', 'iron-mongering', 0, 'service', 'View Service'),
+  ('Plasterboard Ceiling', 'Suspended and plasterboard ceilings with clean, modern finishes.', 0, '/images/services/plasterboard-ceiling.jpg', 'plasterboard-ceiling', 0, 'service', 'View Service'),
+  ('Painting & Decoration', 'Interior and exterior painting, finishing and decoration.', 0, '/images/services/painting-decoration.jpg', 'painting-decoration', 0, 'service', 'View Service'),
+  ('Kitchen Cabinets', 'Bespoke fitted kitchen cabinets built to your space.', 0, '/images/services/kitchen-cabinets.jpg', 'kitchen-cabinets', 0, 'service', 'View Service')
+) AS seed(name, description, price, image_url, category, stock, product_type, cta_label)
+WHERE NOT EXISTS (SELECT 1 FROM products WHERE product_type = 'service');
+
+INSERT INTO recent_work (title, tag, image_url)
+SELECT * FROM (VALUES
+  ('Automated Gate Installation', 'Residential', '/images/services/automated-gates.jpg'),
+  ('Roller Shutter Fit-Out', 'Commercial', '/images/services/roller-shutters.jpg'),
+  ('Ornamental Iron Gate', 'Fabrication', '/images/services/iron-mongering.jpg'),
+  ('Plasterboard Ceiling', 'Renovation', '/images/services/plasterboard-ceiling.jpg'),
+  ('Full Interior Repaint', 'Residential', '/images/services/painting-decoration.jpg'),
+  ('Fitted Kitchen Cabinets', 'Interior', '/images/services/kitchen-cabinets.jpg')
+) AS seed(title, tag, image_url)
+WHERE NOT EXISTS (SELECT 1 FROM recent_work);
+
+INSERT INTO capabilities (name, image_url, rating, rating_label, description)
+SELECT * FROM (VALUES
+  ('Building & Fabrication', '/images/services/fabrication.jpg', '500+', 'projects built', 'From structural builds to custom metal fabrication, executed to spec and built to last.'),
+  ('Interior Finishing & Consulting', '/images/services/kitchen-cabinets.jpg', '10+', 'years experience', 'Full interior fit-outs, building finishing and expert project consulting from start to handover.'),
+  ('Gate & Shutter Automation', '/images/services/automated-gates.jpg', '24/7', 'site support', 'Automated gates, roller shutters and access control systems installed, wired and serviced.')
+) AS seed(name, image_url, rating, rating_label, description)
+WHERE NOT EXISTS (SELECT 1 FROM capabilities);
+
+INSERT INTO hero_content (id, image_url, headline, subtext, cta_label, cta_href)
+VALUES (1, '/images/services/hero-main.png', 'Building & Fabrication', 'Gates, roofing sheets, kitchen cabinets & every material to build your home', 'Shop Now', '/products')
+ON CONFLICT (id) DO NOTHING;
