@@ -12,6 +12,15 @@ const homeCategories = [
   { label: "Bathroom Fittings", slug: "bathroom-fittings" },
   { label: "Shower Cubicle", slug: "shower-cubicle" },
   { label: "Building Materials", slug: "cement" },
+  { label: "Building & Construction", slug: "building-and-construction" },
+  { label: "Painting", slug: "painting" },
+  { label: "Iron Metal Fabrication", slug: "iron-metal-fabrication" },
+  { label: "Structural Works", slug: "structural-works" },
+  { label: "Cabinet", slug: "cabinet" },
+  { label: "Frameless Glass Balustrade", slug: "frameless-glass-balustrade" },
+  { label: "Stainless Balustrade", slug: "stainless-balustrade" },
+  { label: "Window Glazing", slug: "window-glazing" },
+  { label: "Curtain Walls", slug: "curtain-walls" },
 ];
 
 const services = [

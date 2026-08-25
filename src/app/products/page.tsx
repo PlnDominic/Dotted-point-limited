@@ -55,6 +55,15 @@ function ProductsPageContent() {
     { value: "plumbing-electrical", label: "Electrical" },
     { value: "hardware", label: "Hardware" },
     { value: "shower-cubicle", label: "Shower Cubicle" },
+    { value: "building-and-construction", label: "Building & Construction" },
+    { value: "painting", label: "Painting" },
+    { value: "iron-metal-fabrication", label: "Iron Metal Fabrication" },
+    { value: "structural-works", label: "Structural Works" },
+    { value: "cabinet", label: "Cabinet" },
+    { value: "frameless-glass-balustrade", label: "Frameless Glass Balustrade" },
+    { value: "stainless-balustrade", label: "Stainless Balustrade" },
+    { value: "window-glazing", label: "Window Glazing" },
+    { value: "curtain-walls", label: "Curtain Walls" },
   ];
 
   return (
