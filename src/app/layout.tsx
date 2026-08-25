@@ -128,6 +128,17 @@ export default function RootLayout({
                     )
                   )}
                 </ul>
+                <div className="mt-4 text-gray-400 text-[12px]">
+                  <p>
+                    <span className="font-bold">Phone:</span> +233 54 164 4600
+                  </p>
+                  <p>
+                    <span className="font-bold">Email:</span> dottedpointl@gmail.com
+                  </p>
+                  <p>
+                    <span className="font-bold">Location:</span> Accra
+                  </p>
+                </div>
               </div>
 
               {/* Newsletter */}
