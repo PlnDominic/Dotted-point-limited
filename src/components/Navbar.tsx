@@ -103,8 +103,8 @@ export default function Navbar() {
                 </svg>
               </button>
               {categoriesOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-48 animate-fade-in">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-56 animate-fade-in">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 max-h-[70vh] overflow-y-auto">
                     {categoryLinks.map((c) => (
                       <Link
                         key={c.href}

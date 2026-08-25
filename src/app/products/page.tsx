@@ -80,7 +80,7 @@ function ProductsPageContent() {
       </div>
 
       {/* Category pills */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+      <div className="flex flex-wrap gap-2 mb-8">
         {categories.map((c) => (
           <button
             key={c.value}
