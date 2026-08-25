@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ProductsPage() {
   return (
@@ -20,7 +21,9 @@ function ProductsPageContent() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [cart, setCart] = useState<Set<string>>(new Set());
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -38,6 +41,28 @@ function ProductsPageContent() {
     fetchProducts();
   }, [category, supabase]);
 
+  useEffect(() => {
+    async function persistCart() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: existing } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq("user_id", user.id);
+      if (existing && existing.length > 0) {
+        // Update quantities
+        for (const item of existing) {
+          const productInCart = products.find((p) => p.id === item.product_id);
+          if (productInCart) {
+            const quantity = cart.has(productInCart.id) ? (productInCart.stock ?? 0) : 0;
+            await supabase.from("cart_items").update({ quantity }).eq("id", item.id);
+          }
+        }
+      }
+    }
+    persistCart();
+  }, [cart, products, supabase]);
+
   function toggleLike(id: string) {
     setLiked((prev) => {
       const next = new Set(prev);
@@ -45,6 +70,17 @@ function ProductsPageContent() {
       else next.add(id);
       return next;
     });
+  }
+
+  function toggleCart(id: string) {
+    setCart((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    // Add to cart - will be handled by Navbar CartModal
+    // No auto-redirect to login on products page
   }
 
   const categories = [
@@ -192,9 +228,23 @@ function ProductsPageContent() {
                     ${product.price.toFixed(2)}
                   </span>
                   {product.stock > 0 ? (
-                    <span className="text-[11px] text-green-600 font-medium">
-                      In Stock
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCart(product.id);
+                        }}
+                        className={`text-[11px] font-bold text-white bg-[var(--color-brand)] rounded px-2 py-1 hover:bg-[var(--color-brand-dark)] transition-colors ${
+                          cart.has(product.id) ? "active" : ""
+                        }`}
+                        aria-label="Add to cart"
+                      >
+                        Add to Cart
+                      </button>
+                      <span className="text-[10px] text-gray-300">
+                        {cart.has(product.id) ? "Added" : "Cart"}
+                      </span>
+                    </div>
                   ) : (
                     <span className="text-[11px] text-red-500 font-medium">
                       Sold Out
