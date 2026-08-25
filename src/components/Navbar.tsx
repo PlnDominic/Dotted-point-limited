@@ -45,7 +45,7 @@ export default function Navbar() {
     { href: "/products?category=kitchen-sinks", label: "Kitchen Sinks" },
     { href: "/products?category=bathroom-fittings", label: "Bathroom Fittings" },
     { href: "/products?category=shower-cubicle", label: "Shower Cubicle" },
-    { href: "/products?category=cement", label: "Building Materials" },
+    { href: "/products?category=concrete-blocks", label: "Building Materials" },
     { href: "/products?category=building-and-construction", label: "Building & Construction" },
     { href: "/products?category=painting", label: "Painting" },
     { href: "/products?category=iron-metal-fabrication", label: "Iron Metal Fabrication" },
