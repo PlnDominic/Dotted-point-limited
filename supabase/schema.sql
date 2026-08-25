@@ -55,11 +55,12 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Products are viewable by everyone"
   ON products FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert products"
-  ON products FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Admin users can manage products (check email domain or specific email)
+CREATE POLICY "Admin users can insert products"
+  ON products FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.jwt()->>'email' LIKE '%@dottedpoint.gh');
 
-CREATE POLICY "Authenticated users can update products"
-  ON products FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin users can update products"
+  ON products FOR UPDATE USING (auth.role() = 'authenticated' AND auth.jwt()->>'email' LIKE '%@dottedpoint.gh%');
 
 -- Cart items: users can only see/edit their own
 CREATE POLICY "Users can view their own cart"
