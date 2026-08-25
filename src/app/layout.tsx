@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "Dotted Point Limited — Building, Fabrication & Interior Finishing",
   description:
-    "A Ghanaian building, fabrication and interior finishing company — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: cement, reinforcement steel, concrete blocks, roofing sheets, timber, floor tiles, kitchen sinks, WC, baths, taps and more.",
+    "A Ghanaian building, fabrication and interior finishing company — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: modified blocks, roofing sheets, floor tiles, kitchen sinks, WC, baths, taps and more.",
 };
 
 export const viewport: Viewport = {

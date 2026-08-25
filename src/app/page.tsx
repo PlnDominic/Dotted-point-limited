@@ -11,7 +11,7 @@ const homeCategories = [
   { label: "Kitchen Cabinets", slug: "kitchen-cabinets" },
   { label: "Bathroom Fittings", slug: "bathroom-fittings" },
   { label: "Shower Cubicle", slug: "shower-cubicle" },
-  { label: "Building Materials", slug: "cement" },
+  { label: "Building Materials", slug: "concrete-blocks" },
   { label: "Building & Construction", slug: "building-and-construction" },
   { label: "Painting", slug: "painting" },
   { label: "Iron Metal Fabrication", slug: "iron-metal-fabrication" },
@@ -33,11 +33,8 @@ const services = [
 ];
 
 const buildingMaterials = [
-  { name: "Cement", slug: "cement", image: "/images/materials/cement.png", desc: "Portland cement for foundations, blockwork and plastering.", price: 89.99, originalPrice: 129.99, sold: "8.2K+", rating: 4.6, reviews: 1042 },
-  { name: "Reinforcement Steel", slug: "reinforcement-steel", image: "/images/materials/reinforcement-steel.jpg", desc: "Rebar and binding wire for structural concrete work.", price: 349.5, originalPrice: 499.0, sold: "3.1K+", rating: 4.7, reviews: 588 },
-  { name: "Concrete Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Sandcrete & hollow concrete blocks for walls and fencing.", price: 12.5, originalPrice: 18.0, sold: "15K+", rating: 4.5, reviews: 2034 },
+  { name: "Modified Blocks", slug: "concrete-blocks", image: "/images/materials/concrete-blocks.jpg", desc: "Modified concrete blocks for walls and fencing, priced per block.", price: 25.0, originalPrice: 25.0, sold: "15K+", rating: 4.5, reviews: 2034 },
   { name: "Roofing Sheets", slug: "roofing-sheets", image: "/images/materials/roofing-sheets.jpg", desc: "Aluminium & corrugated roofing sheets, nails and fittings.", price: 145.0, originalPrice: 210.0, sold: "6.4K+", rating: 4.4, reviews: 762 },
-  { name: "Timber", slug: "timber", image: "/images/materials/timber.jpg", desc: "Sawn timber for roofing, formwork and carpentry.", price: 65.0, originalPrice: 95.0, sold: "9.7K+", rating: 4.3, reviews: 915 },
   { name: "Floor Tiles", slug: "floor-tiles", image: "/images/materials/floor-tiles.png", desc: "Ceramic & porcelain floor tiles, adhesive and grout.", price: 108.49, originalPrice: 193.99, sold: "15K+", rating: 4.6, reviews: 1173 },
   { name: "Plumbing Pipes & Fittings", slug: "plumbing-pipes", image: "/images/materials/plumbing-pipes.jpg", desc: "PVC pipes, elbows, tees and fittings for water & drainage.", price: 24.99, originalPrice: 39.99, sold: "12K+", rating: 4.5, reviews: 1301 },
   { name: "Electrical Cables", slug: "electrical-cables", image: "/images/materials/electrical-cables.jpg", desc: "Wiring cables, conduit and electrical accessories.", price: 54.78, originalPrice: 98.51, sold: "15K+", rating: 4.5, reviews: 887 },
@@ -161,10 +158,10 @@ export default function Home() {
 
       {/* ═══════ CATEGORY FILTER ═══════ */}
       <section className="border-b border-gray-100">
-        <div className="max-w-[1300px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap shrink-0 transition-colors ${
+            className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors ${
               activeCategory === "all"
                 ? "bg-[#171717] text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
@@ -176,7 +173,7 @@ export default function Home() {
             <button
               key={c.slug}
               onClick={() => setActiveCategory(c.slug)}
-              className={`font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap shrink-0 transition-colors ${
+              className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors ${
                 activeCategory === c.slug
                   ? "bg-[#171717] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
@@ -237,17 +234,21 @@ export default function Home() {
                     <span className="text-[15px] font-bold text-[#171717]">
                       {formatGHS(m.price)}
                     </span>
-                    <span className="text-[11px] text-gray-400 line-through">
-                      {formatGHS(m.originalPrice)}
-                    </span>
+                    {discount > 0 && (
+                      <span className="text-[11px] text-gray-400 line-through">
+                        {formatGHS(m.originalPrice)}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[10.5px] text-gray-400">
                       {m.sold} sold
                     </span>
-                    <span className="text-[10.5px] font-bold text-white bg-orange-500 rounded px-1.5 py-0.5">
-                      -{discount}%
-                    </span>
+                    {discount > 0 && (
+                      <span className="text-[10.5px] font-bold text-white bg-orange-500 rounded px-1.5 py-0.5">
+                        -{discount}%
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">

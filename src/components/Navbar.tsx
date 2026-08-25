@@ -45,7 +45,7 @@ export default function Navbar() {
     { href: "/products?category=kitchen-sinks", label: "Kitchen Sinks" },
     { href: "/products?category=bathroom-fittings", label: "Bathroom Fittings" },
     { href: "/products?category=shower-cubicle", label: "Shower Cubicle" },
-    { href: "/products?category=cement", label: "Building Materials" },
+    { href: "/products?category=concrete-blocks", label: "Building Materials" },
     { href: "/products?category=building-and-construction", label: "Building & Construction" },
     { href: "/products?category=painting", label: "Painting" },
     { href: "/products?category=iron-metal-fabrication", label: "Iron Metal Fabrication" },
@@ -103,8 +103,8 @@ export default function Navbar() {
                 </svg>
               </button>
               {categoriesOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-48 animate-fade-in">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-56 animate-fade-in">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 max-h-[70vh] overflow-y-auto">
                     {categoryLinks.map((c) => (
                       <Link
                         key={c.href}
