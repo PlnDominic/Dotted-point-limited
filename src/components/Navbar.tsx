@@ -74,7 +74,7 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Center Nav — Desktop */}
+          {/* Center Nav Desktop */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link

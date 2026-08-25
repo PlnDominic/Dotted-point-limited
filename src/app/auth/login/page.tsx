@@ -73,7 +73,7 @@ export default function LoginPage() {
             Welcome Back
           </h1>
           <p className="text-[var(--fg-secondary)]">
-            Sign in with a magic link — no password required.
+            Sign in with a magic link no password required.
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-[var(--fg-muted)] mt-8">
-          New here? Use your email above — we&apos;ll create your account
+          New here? Use your email above we&apos;ll create your account
           automatically.
         </p>
       </div>

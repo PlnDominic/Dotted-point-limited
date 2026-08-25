@@ -90,7 +90,7 @@ export default function AccountPage() {
                     month: "long",
                     day: "numeric",
                   })
-                : "—"}
+                : ""}
             </p>
           </div>
         </div>

@@ -204,7 +204,7 @@ export default function Home() {
         </div>
         {filteredMaterials.length === 0 ? (
           <p className="text-[13px] text-gray-400 py-8 text-center">
-            No offers in this category yet — check back soon.
+            No offers in this category yet - check back soon.
           </p>
         ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
@@ -295,7 +295,7 @@ export default function Home() {
         </div>
         {filteredServices.length === 0 ? (
           <p className="text-[13px] text-gray-400 py-8 text-center">
-            No services in this category yet — check back soon.
+            No services in this category yet - check back soon.
           </p>
         ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">

@@ -5,9 +5,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Dotted Point Limited — Building, Fabrication & Interior Finishing",
+  title: "Dotted Point Limited - Building, Fabrication & Interior Finishing",
   description:
-    "A Ghanaian building, fabrication and interior finishing company — automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: modified blocks, roofing sheets, floor tiles, kitchen sinks, WC, baths, taps and more.",
+    "A Ghanaian building, fabrication and interior finishing company - automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: modified blocks, roofing sheets, floor tiles, kitchen sinks, WC, baths, taps and more.",
 };
 
 export const viewport: Viewport = {
@@ -48,7 +48,7 @@ export default function RootLayout({
                 </div>
                 <p className="text-gray-400 text-[13px] leading-relaxed mb-5 max-w-[240px]">
                   We build, we fabricate, we do interiors, building
-                  finishing and consulting — end to end.
+                  finishing and consulting - end to end.
                 </p>
                 {/* Social */}
                 <div className="flex gap-3">
