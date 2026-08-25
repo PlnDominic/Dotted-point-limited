@@ -20,6 +20,15 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
   const supabase = createClient();
 
   useEffect(() => {
+    // Don't touch auth or fetch anything until the cart is actually opened —
+    // this component is mounted on every page via the Navbar, so running
+    // this unconditionally on mount used to redirect every anonymous
+    // visitor straight to /auth/login the instant any page loaded.
+    if (!isOpen) return;
+
+    let cancelled = false;
+    setLoading(true);
+
     async function loadCart() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -31,11 +40,17 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
         .from("cart_items")
         .select("*, product:products(*)")
         .eq("user_id", user.id);
-      setItems((data as CartItemWithProduct[]) ?? []);
-      setLoading(false);
+      if (!cancelled) {
+        setItems((data as CartItemWithProduct[]) ?? []);
+        setLoading(false);
+      }
     }
     loadCart();
-  }, [supabase, setIsOpen, router]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, supabase, setIsOpen, router]);
 
   const subtotal = items.reduce(
     (s, i) => s + (i.product?.price ?? 0) * i.quantity,
@@ -44,7 +59,7 @@ export function CartModal({ isOpen, setIsOpen }: CartModalProps) {
   const shipping = subtotal >= 100 ? 0 : 9.99;
   const total = subtotal + shipping;
 
-  if (loading) {
+  if (!isOpen || loading) {
     return null;
   }
 
