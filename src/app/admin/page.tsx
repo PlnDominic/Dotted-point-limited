@@ -18,6 +18,7 @@ export default function AdminPanel() {
     description: "",
     price: 0,
     image_url: "",
+    image_file: null as File | null,
     category: "",
     stock: 0,
   });
@@ -49,15 +50,34 @@ export default function AdminPanel() {
     setLoading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const supabase = createClient();
+    let imagePath = form.image_url;
+    
+    if (form.image_file) {
+      const { data, error } = await supabase.storage
+        .from("products")
+        .upload(`${form.id || Date.now()}-${form.name.replace(/\s+/g, "-")}.jpg`, form.image_file);
+      if (error) console.error("Upload error:", error);
+      else {
+        const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(data.path);
+        imagePath = publicUrl;
+      }
+    }
+    
+    const productData = {
+      ...form,
+      image_url: imagePath,
+    };
+    
     if (mode === "add") {
-      const { error } = await supabase.from("products").insert([form]);
+      const { error } = await supabase.from("products").insert([productData]);
       if (error) console.error(error);
     } else if (mode === "edit" && form.id) {
       const { error } = await supabase
         .from("products")
-        .update(form)
+        .update(productData)
         .eq("id", form.id);
       if (error) console.error(error);
     }
@@ -68,6 +88,7 @@ export default function AdminPanel() {
       description: "",
       price: 0,
       image_url: "",
+      image_file: null as File | null,
       category: "",
       stock: 0,
     });
@@ -75,7 +96,7 @@ export default function AdminPanel() {
   };
 
   const editProduct = (product: Product) => {
-    setForm({ ...product });
+    setForm({ ...product, image_file: null });
     setMode("edit");
   };
 
@@ -182,12 +203,43 @@ export default function AdminPanel() {
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
-              <input
-                placeholder="Image URL"
-                value={form.image_url}
-                onChange={(e) => setForm((prev) => ({ ...prev, image_url: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
+              <div>
+                <label className="text-[12px] text-gray-500 mb-1 block">
+                  Product Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+                  className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer hidden sm:block"
+                />
+                <span
+                  className="text-[12px] text-gray-400"
+                >
+                  {form.image_url ? (form.image_file ? "Preview available" : "Add image from URL") : "Add image from URL"}
+                </span>
+                {form.image_file && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(form.image_file)}
+                      alt="Preview"
+                      className="w-24 h-24 object-cover rounded mb-2"
+                    />
+                    <button
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          image_file: null,
+                          image_url: "",
+                        }))
+                      }
+                      className="text-[10px] text-red-500 hover:text-black"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
               <select
                 value={form.category}
                 onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
