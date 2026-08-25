@@ -161,7 +161,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           ) : !user ? (
             <div className="text-center my-12">
-              <Link href="/auth/login" className="btn-dark">
+              <Link href="/admin/login" className="btn-dark">
                 Sign in to access admin
               </Link>
             </div>
