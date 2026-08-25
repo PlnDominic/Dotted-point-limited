@@ -420,39 +420,59 @@ function ProductsTab({
                   Shown on the homepage&apos;s Amazing Offer card
                 </p>
                 <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Original price (for discount badge, optional)"
-                    value={form.original_price}
-                    onChange={(e) => setForm((prev) => ({ ...prev, original_price: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border rounded text-[14px]"
-                  />
-                  <input
-                    placeholder="Sold count text, e.g. 8.2K+"
-                    value={form.sold_count}
-                    onChange={(e) => setForm((prev) => ({ ...prev, sold_count: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded text-[14px]"
-                  />
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Original Price (GH₵)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="For discount badge, optional"
+                      value={form.original_price}
+                      onChange={(e) => setForm((prev) => ({ ...prev, original_price: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 border rounded text-[14px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Sold Count
+                    </label>
+                    <input
+                      placeholder="e.g. 8.2K+"
+                      value={form.sold_count}
+                      onChange={(e) => setForm((prev) => ({ ...prev, sold_count: e.target.value }))}
+                      className="w-full px-3 py-2 border rounded text-[14px]"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    placeholder="Rating (0-5)"
-                    value={form.rating}
-                    onChange={(e) => setForm((prev) => ({ ...prev, rating: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border rounded text-[14px]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Reviews count"
-                    value={form.reviews_count}
-                    onChange={(e) => setForm((prev) => ({ ...prev, reviews_count: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border rounded text-[14px]"
-                  />
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Rating (0-5)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      placeholder="e.g. 4.4"
+                      value={form.rating}
+                      onChange={(e) => setForm((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 border rounded text-[14px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      Reviews Count
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 762"
+                      value={form.reviews_count}
+                      onChange={(e) => setForm((prev) => ({ ...prev, reviews_count: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 border rounded text-[14px]"
+                    />
+                  </div>
                 </div>
               </>
             ) : (
