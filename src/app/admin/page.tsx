@@ -348,19 +348,29 @@ function ProductsTab({
               ))}
             </div>
 
-            <input
-              placeholder="Product name"
-              value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              required
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
-            />
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Product Name
+              </label>
+              <input
+                placeholder="e.g. Automated Sliding Gate"
+                value={form.name}
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Description
+              </label>
+              <textarea
+                placeholder="Description"
+                value={form.description}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+              />
+            </div>
 
             <div>
               <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
@@ -380,38 +390,53 @@ function ProductsTab({
               )}
             </div>
 
-            <select
-              value={form.category}
-              onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-              required
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            >
-              <option value="">Select a category</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Category
+              </label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              >
+                <option value="">Select a category</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Price (GH₵)"
-                value={form.price}
-                onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
-                required
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
-              <input
-                type="number"
-                placeholder="Stock quantity"
-                value={form.stock}
-                onChange={(e) => setForm((prev) => ({ ...prev, stock: Number(e.target.value) }))}
-                required
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Price (GH₵)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.price}
+                  onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
+                  required
+                  className="w-full px-3 py-2 border rounded text-[14px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Stock Quantity
+                </label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={form.stock}
+                  onChange={(e) => setForm((prev) => ({ ...prev, stock: Number(e.target.value) }))}
+                  required
+                  className="w-full px-3 py-2 border rounded text-[14px]"
+                />
+              </div>
             </div>
 
             {form.product_type === "material" ? (
@@ -662,20 +687,30 @@ function RecentWorkTab({
             {mode === "add" ? "Add Project" : "Edit Project"}
           </h3>
           <form onSubmit={handleSubmit} className="grid gap-4">
-            <input
-              placeholder="Title, e.g. Automated Gate Installation"
-              value={form.title}
-              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-              required
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
-            <input
-              placeholder="Tag, e.g. Residential"
-              value={form.tag}
-              onChange={(e) => setForm((prev) => ({ ...prev, tag: e.target.value }))}
-              required
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Title
+              </label>
+              <input
+                placeholder="e.g. Automated Gate Installation"
+                value={form.title}
+                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Tag
+              </label>
+              <input
+                placeholder="e.g. Residential"
+                value={form.tag}
+                onChange={(e) => setForm((prev) => ({ ...prev, tag: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
             <div>
               <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
               <input
@@ -862,32 +897,52 @@ function CapabilitiesTab({
             {mode === "add" ? "Add Capability" : "Edit Capability"}
           </h3>
           <form onSubmit={handleSubmit} className="grid gap-4">
-            <input
-              placeholder="Name, e.g. Building & Fabrication"
-              value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              required
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
-            />
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Name
+              </label>
+              <input
+                placeholder="e.g. Building & Fabrication"
+                value={form.name}
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Description
+              </label>
+              <textarea
+                placeholder="Description"
+                value={form.description}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              <input
-                placeholder="Stat, e.g. 500+"
-                value={form.rating}
-                onChange={(e) => setForm((prev) => ({ ...prev, rating: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
-              <input
-                placeholder="Stat label, e.g. projects built"
-                value={form.rating_label}
-                onChange={(e) => setForm((prev) => ({ ...prev, rating_label: e.target.value }))}
-                className="w-full px-3 py-2 border rounded text-[14px]"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Stat
+                </label>
+                <input
+                  placeholder="e.g. 500+"
+                  value={form.rating}
+                  onChange={(e) => setForm((prev) => ({ ...prev, rating: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded text-[14px]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Stat Label
+                </label>
+                <input
+                  placeholder="e.g. projects built"
+                  value={form.rating_label}
+                  onChange={(e) => setForm((prev) => ({ ...prev, rating_label: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded text-[14px]"
+                />
+              </div>
             </div>
             <div>
               <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
@@ -1081,32 +1136,52 @@ function HeroTab({
               />
             )}
           </div>
-          <input
-            placeholder="Headline"
-            value={form.headline}
-            onChange={(e) => setForm((prev) => ({ ...prev, headline: e.target.value }))}
-            required
-            className="w-full px-3 py-2 border rounded text-[14px]"
-          />
-          <textarea
-            placeholder="Subtext"
-            value={form.subtext}
-            onChange={(e) => setForm((prev) => ({ ...prev, subtext: e.target.value }))}
-            className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
-          />
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+              Headline
+            </label>
+            <input
+              placeholder="e.g. Building & Fabrication"
+              value={form.headline}
+              onChange={(e) => setForm((prev) => ({ ...prev, headline: e.target.value }))}
+              required
+              className="w-full px-3 py-2 border rounded text-[14px]"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+              Subtext
+            </label>
+            <textarea
+              placeholder="Subtext"
+              value={form.subtext}
+              onChange={(e) => setForm((prev) => ({ ...prev, subtext: e.target.value }))}
+              className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <input
-              placeholder="Button label, e.g. Shop Now"
-              value={form.cta_label}
-              onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
-            <input
-              placeholder="Button link, e.g. /products"
-              value={form.cta_href}
-              onChange={(e) => setForm((prev) => ({ ...prev, cta_href: e.target.value }))}
-              className="w-full px-3 py-2 border rounded text-[14px]"
-            />
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Button Label
+              </label>
+              <input
+                placeholder="e.g. Shop Now"
+                value={form.cta_label}
+                onChange={(e) => setForm((prev) => ({ ...prev, cta_label: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                Button Link
+              </label>
+              <input
+                placeholder="e.g. /products"
+                value={form.cta_href}
+                onChange={(e) => setForm((prev) => ({ ...prev, cta_href: e.target.value }))}
+                className="w-full px-3 py-2 border rounded text-[14px]"
+              />
+            </div>
           </div>
           <button
             type="submit"
