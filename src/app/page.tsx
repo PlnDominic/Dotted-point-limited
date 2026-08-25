@@ -100,6 +100,7 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function Home() {
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState("all");
 
   function toggleLike(id: string) {
     setLiked((prev) => {
@@ -109,6 +110,16 @@ export default function Home() {
       return next;
     });
   }
+
+  const filteredMaterials =
+    activeCategory === "all"
+      ? buildingMaterials
+      : buildingMaterials.filter((m) => m.slug === activeCategory);
+
+  const filteredServices =
+    activeCategory === "all"
+      ? services
+      : services.filter((s) => s.slug === activeCategory);
 
   return (
     <div>
@@ -142,20 +153,28 @@ export default function Home() {
       {/* ═══════ CATEGORY FILTER ═══════ */}
       <section className="border-b border-gray-100">
         <div className="max-w-[1300px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
-          <Link
-            href="/products"
-            className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap bg-[#171717] text-white shrink-0 hover:opacity-90 transition-opacity"
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap shrink-0 transition-colors ${
+              activeCategory === "all"
+                ? "bg-[#171717] text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
+            }`}
           >
             All
-          </Link>
+          </button>
           {homeCategories.map((c) => (
-            <Link
+            <button
               key={c.slug}
-              href={`/products?category=${c.slug}`}
-              className="font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717] transition-colors shrink-0"
+              onClick={() => setActiveCategory(c.slug)}
+              className={`font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap shrink-0 transition-colors ${
+                activeCategory === c.slug
+                  ? "bg-[#171717] text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
+              }`}
             >
               {c.label}
-            </Link>
+            </button>
           ))}
         </div>
       </section>
@@ -177,8 +196,13 @@ export default function Home() {
             </svg>
           </Link>
         </div>
+        {filteredMaterials.length === 0 ? (
+          <p className="text-[13px] text-gray-400 py-8 text-center">
+            No offers in this category yet — check back soon.
+          </p>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
-          {buildingMaterials.map((m, i) => {
+          {filteredMaterials.map((m, i) => {
             const discount = Math.round(
               ((m.originalPrice - m.price) / m.originalPrice) * 100
             );
@@ -239,6 +263,7 @@ export default function Home() {
             );
           })}
         </div>
+        )}
       </section>
 
       {/* ═══════ OUR SERVICES ═══════ */}
@@ -258,8 +283,13 @@ export default function Home() {
             </svg>
           </Link>
         </div>
+        {filteredServices.length === 0 ? (
+          <p className="text-[13px] text-gray-400 py-8 text-center">
+            No services in this category yet — check back soon.
+          </p>
+        ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {services.map((s, i) => (
+          {filteredServices.map((s, i) => (
             <Link
               key={s.slug}
               href={`/products?category=${s.slug}`}
@@ -283,6 +313,7 @@ export default function Home() {
             </Link>
           ))}
         </div>
+        )}
       </section>
 
       {/* ═══════ RECENT WORK ═══════ */}
