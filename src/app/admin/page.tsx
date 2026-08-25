@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types";
 import type { User } from "@supabase/supabase-js";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function AdminPanel() {
@@ -157,45 +158,39 @@ export default function AdminPanel() {
               <input
                 type="hidden"
                 value={form.id}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, id: e.target.value }))
+                onChange={(e) => setForm((prev) => ({ ...prev, id: e.target.value }))}
                 disabled={mode === "add"}
               />
               <input
                 placeholder="Product name"
                 value={form.name}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, name: e.target.value }))
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
               <textarea
                 placeholder="Product description"
                 value={form.description}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, description: e.target.value }))
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
               />
               <input
                 type="number"
                 placeholder="Price (GH₵)"
                 value={form.price}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, price: Number(e.target.value) }))
+                onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
               <input
                 placeholder="Image URL"
                 value={form.image_url}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, image_url: e.target.value }))
+                onChange={(e) => setForm((prev) => ({ ...prev, image_url: e.target.value }))}
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
               <select
                 value={form.category}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, category: e.target.value }))
+                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                 className="w-full px-3 py-2 border rounded text-[14px]"
               >
                 <option value="power-tools">Power Tools</option>
@@ -209,8 +204,7 @@ export default function AdminPanel() {
                 type="number"
                 placeholder="Stock quantity"
                 value={form.stock}
-                onChange=(e) =>
-                  setForm((prev) => ({ ...prev, stock: Number(e.target.value) }))
+                onChange={(e) => setForm((prev) => ({ ...prev, stock: Number(e.target.value) }))}
                 required
                 className="w-full px-3 py-2 border rounded text-[14px]"
               />
