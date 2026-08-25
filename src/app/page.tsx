@@ -152,7 +152,7 @@ export default function Home() {
 
       {/* ═══════ CATEGORY FILTER ═══════ */}
       <section className="border-b border-gray-100">
-        <div className="max-w-[1300px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="max-w-[1300px] mx-auto px-6 py-4 flex flex-wrap gap-2">
           <button
             onClick={() => setActiveCategory("all")}
             className={`font-[var(--font-heading)] text-[13px] font-semibold px-5 py-2.5 whitespace-nowrap shrink-0 transition-colors ${
