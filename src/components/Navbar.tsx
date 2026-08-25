@@ -46,6 +46,15 @@ export default function Navbar() {
     { href: "/products?category=bathroom-fittings", label: "Bathroom Fittings" },
     { href: "/products?category=shower-cubicle", label: "Shower Cubicle" },
     { href: "/products?category=cement", label: "Building Materials" },
+    { href: "/products?category=building-and-construction", label: "Building & Construction" },
+    { href: "/products?category=painting", label: "Painting" },
+    { href: "/products?category=iron-metal-fabrication", label: "Iron Metal Fabrication" },
+    { href: "/products?category=structural-works", label: "Structural Works" },
+    { href: "/products?category=cabinet", label: "Cabinet" },
+    { href: "/products?category=frameless-glass-balustrade", label: "Frameless Glass Balustrade" },
+    { href: "/products?category=stainless-balustrade", label: "Stainless Balustrade" },
+    { href: "/products?category=window-glazing", label: "Window Glazing" },
+    { href: "/products?category=curtain-walls", label: "Curtain Walls" },
   ];
 
   return (
