@@ -284,7 +284,7 @@ export default function Home() {
             className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors ${
               activeCategory === "all"
                 ? "bg-[var(--color-brand)] text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
+                : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
             }`}
           >
             All
