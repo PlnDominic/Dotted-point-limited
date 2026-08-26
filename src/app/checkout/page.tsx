@@ -129,52 +129,31 @@ export default function CheckoutPage() {
       return;
     }
 
+    // place_order() prices everything server-side from the live products
+    // table (never trusting a client-supplied total/price) and creates the
+    // order, its line items, and the stock decrement together in one
+    // transaction. See supabase/schema.sql.
     const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: user.id,
-        total,
-        status: "pending",
-        shipping_email: shipping.email.trim(),
-        shipping_name: shipping.fullName.trim(),
-        shipping_phone: shipping.phone.trim(),
-        shipping_address: shipping.address.trim(),
-        shipping_city: shipping.city.trim(),
-        shipping_region: shipping.region,
-        shipping_notes: shipping.notes.trim() || null,
+      .rpc("place_order", {
+        p_items: items.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        })),
+        p_shipping_email: shipping.email.trim(),
+        p_shipping_name: shipping.fullName.trim(),
+        p_shipping_phone: shipping.phone.trim(),
+        p_shipping_address: shipping.address.trim(),
+        p_shipping_city: shipping.city.trim(),
+        p_shipping_region: shipping.region,
+        p_shipping_notes: shipping.notes.trim() || null,
       })
-      .select()
-      .single();
+      .single<{ id: string }>();
 
     if (orderError || !order) {
       console.error("Order error:", orderError);
       setPlacing(false);
       return;
     }
-
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.product?.price ?? 0,
-    }));
-
-    await supabase.from("order_items").insert(orderItems);
-
-    // Decrement stock for each purchased item. Runs via a SECURITY DEFINER
-    // function since customers can't UPDATE products directly (see
-    // decrement_product_stock in supabase/schema.sql).
-    const stockResults = await Promise.all(
-      items.map((item) =>
-        supabase.rpc("decrement_product_stock", {
-          p_product_id: item.product_id,
-          p_quantity: item.quantity,
-        })
-      )
-    );
-    stockResults.forEach(({ error }) => {
-      if (error) console.error("Stock decrement error:", error);
-    });
 
     await clear();
     try {

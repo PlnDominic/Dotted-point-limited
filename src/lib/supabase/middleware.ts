@@ -28,7 +28,31 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // /admin is otherwise only gated client-side (the page's own React state
+  // checks the `admins` table after render) — a non-admin's browser would
+  // still download the whole admin UI before being told no. This RLS query
+  // ("Admins list is readable by admins") already returns nothing for a
+  // non-admin, so it's a cheap, correct place to redirect them away before
+  // the page ships at all. It never blocks a legitimate admin: the same
+  // check is what lets them read their own row.
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    if (!user) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    const { data: adminRow } = await supabase
+      .from("admins")
+      .select("email")
+      .eq("email", user.email ?? "")
+      .maybeSingle();
+    if (!adminRow) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+  }
 
   return supabaseResponse;
 }

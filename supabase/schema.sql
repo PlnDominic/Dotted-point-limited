@@ -456,3 +456,111 @@ CREATE POLICY "Users can update their own review"
 
 CREATE POLICY "Users can delete their own review, admins any"
   ON reviews FOR DELETE USING (auth.uid() = user_id OR is_admin());
+
+-- ============================================
+-- Security fix: server-computed order pricing + stock
+-- ============================================
+-- Previously the client inserted orders/order_items directly, supplying
+-- its own `total` and `price` values, and called
+-- decrement_product_stock() itself with no check that it corresponded
+-- to a real purchase. Either could be forged from the browser console.
+--
+-- place_order() replaces both: it takes only product_id/quantity pairs,
+-- prices everything from the live `products` table (client input for
+-- price/total is never trusted), and creates the order, its line items,
+-- and the stock decrement together, atomically, as the authenticated
+-- caller (auth.uid()) — nobody can place an order "as" someone else.
+CREATE OR REPLACE FUNCTION place_order(
+  p_items JSONB, -- [{ "product_id": "...", "quantity": 2 }, ...]
+  p_shipping_email TEXT,
+  p_shipping_name TEXT,
+  p_shipping_phone TEXT,
+  p_shipping_address TEXT,
+  p_shipping_city TEXT,
+  p_shipping_region TEXT,
+  p_shipping_notes TEXT
+)
+RETURNS orders
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_order orders;
+  v_item JSONB;
+  v_product_id UUID;
+  v_quantity INTEGER;
+  v_price DECIMAL(10,2);
+  v_total DECIMAL(10,2) := 0;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'No items to order';
+  END IF;
+
+  -- Pass 1: validate + total from live prices.
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    v_product_id := (v_item->>'product_id')::UUID;
+    v_quantity := (v_item->>'quantity')::INTEGER;
+
+    IF v_quantity IS NULL OR v_quantity < 1 THEN
+      RAISE EXCEPTION 'Invalid quantity for product %', v_product_id;
+    END IF;
+
+    SELECT price INTO v_price FROM products WHERE id = v_product_id;
+    IF v_price IS NULL THEN
+      RAISE EXCEPTION 'Unknown product %', v_product_id;
+    END IF;
+
+    v_total := v_total + (v_price * v_quantity);
+  END LOOP;
+
+  INSERT INTO orders (
+    user_id, total, status,
+    shipping_email, shipping_name, shipping_phone,
+    shipping_address, shipping_city, shipping_region, shipping_notes
+  )
+  VALUES (
+    auth.uid(), v_total, 'pending',
+    p_shipping_email, p_shipping_name, p_shipping_phone,
+    p_shipping_address, p_shipping_city, p_shipping_region, p_shipping_notes
+  )
+  RETURNING * INTO v_order;
+
+  -- Pass 2: line items + stock, priced from the same live lookup.
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    v_product_id := (v_item->>'product_id')::UUID;
+    v_quantity := (v_item->>'quantity')::INTEGER;
+
+    SELECT price INTO v_price FROM products WHERE id = v_product_id;
+
+    INSERT INTO order_items (order_id, product_id, quantity, price)
+    VALUES (v_order.id, v_product_id, v_quantity, v_price);
+
+    UPDATE products
+    SET stock = GREATEST(stock - v_quantity, 0)
+    WHERE id = v_product_id;
+  END LOOP;
+
+  RETURN v_order;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION place_order(JSONB, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
+
+-- The client no longer calls this directly (place_order() does the
+-- decrement itself, in the same transaction as the order). Revoke the
+-- broad grant so a signed-in user can no longer call it standalone to
+-- zero out arbitrary products' stock.
+REVOKE EXECUTE ON FUNCTION decrement_product_stock(UUID, INTEGER) FROM authenticated;
+
+-- Force all order creation through place_order() (which validates
+-- pricing) instead of a direct client insert with self-reported
+-- total/price.
+DROP POLICY IF EXISTS "Users can create their own orders" ON orders;
+DROP POLICY IF EXISTS "Users can create their own order items" ON order_items;
