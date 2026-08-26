@@ -7,6 +7,8 @@ import type { Product } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatGHS } from "@/lib/currency";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function ProductsPage() {
   return (
@@ -21,20 +23,27 @@ function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
-  const [liked, setLiked] = useState<Set<string>>(new Set());
-  const [cart, setCart] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [searchInput, setSearchInput] = useState(search);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const supabase = createClient();
   const router = useRouter();
+  const { addItem } = useCart();
+  const wishlist = useWishlist();
 
-  // Clicking a service/category link while already on this page (e.g. from
-  // the navbar dropdown) changes the URL but doesn't remount this component
-  // — keep the filter in sync with the URL when that happens.
+  // Clicking a service/category link, or a search, while already on this
+  // page (e.g. from the navbar) changes the URL but doesn't remount this
+  // component — keep the filters in sync with the URL when that happens.
   useEffect(() => {
+    const nextSearch = searchParams.get("search") ?? "";
     setCategory(searchParams.get("category") ?? "all");
+    setSearch(nextSearch);
+    setSearchInput(nextSearch);
   }, [searchParams]);
 
   useEffect(() => {
     async function fetchProducts() {
+      setLoading(true);
       let query = supabase
         .from("products")
         .select("*")
@@ -42,53 +51,27 @@ function ProductsPageContent() {
       if (category !== "all") {
         query = query.eq("category", category);
       }
+      if (search.trim()) {
+        const term = search.trim().replace(/[%_]/g, "");
+        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
+      }
       const { data } = await query;
       setProducts(data ?? []);
       setLoading(false);
     }
     fetchProducts();
-  }, [category, supabase]);
+  }, [category, search, supabase]);
 
-  useEffect(() => {
-    async function persistCart() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: existing } = await supabase
-        .from("cart_items")
-        .select("*")
-        .eq("user_id", user.id);
-      if (existing && existing.length > 0) {
-        // Update quantities
-        for (const item of existing) {
-          const productInCart = products.find((p) => p.id === item.product_id);
-          if (productInCart) {
-            const quantity = cart.has(productInCart.id) ? (productInCart.stock ?? 0) : 0;
-            await supabase.from("cart_items").update({ quantity }).eq("id", item.id);
-          }
-        }
-      }
-    }
-    persistCart();
-  }, [cart, products, supabase]);
-
-  function toggleLike(id: string) {
-    setLiked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleCart(id: string) {
-    setCart((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-    // Add to cart - will be handled by Navbar CartModal
-    // No auto-redirect to login on products page
+  function handleAddToCart(product: Product) {
+    addItem(product);
+    setAddedIds((prev) => new Set(prev).add(product.id));
+    window.setTimeout(() => {
+      setAddedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
+    }, 1500);
   }
 
   const categories = [
@@ -121,19 +104,50 @@ function ProductsPageContent() {
   const activeCategoryLabel =
     category !== "all" ? categories.find((c) => c.value === category)?.label : undefined;
 
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (category !== "all") params.set("category", category);
+    if (searchInput.trim()) params.set("search", searchInput.trim());
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ""}`);
+  }
+
   return (
     <div className="max-w-[1300px] mx-auto px-6 py-10 md:py-14">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-[var(--font-heading)] text-[32px] md:text-[40px] font-[800] tracking-[-0.02em] text-[#1a1a1a] mb-2">
-          {activeCategoryLabel ? activeCategoryLabel : "Shop All Products"}
+          {search
+            ? `Search results for "${search}"`
+            : activeCategoryLabel
+            ? activeCategoryLabel
+            : "Shop All Products"}
         </h1>
         <p className="text-gray-500 text-[15px] max-w-lg">
-          {activeCategoryLabel
+          {search
+            ? `${products.length} item${products.length === 1 ? "" : "s"} found.`
+            : activeCategoryLabel
             ? `Browse everything we offer under ${activeCategoryLabel}.`
             : "Professional-grade tools and materials for every job. Filter by department to find exactly what you need."}
         </p>
       </div>
+
+      {/* Search box */}
+      <form onSubmit={submitSearch} className="flex gap-2 mb-6 max-w-md">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search products and services…"
+          className="flex-1 min-w-0 px-4 py-2.5 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--color-brand)]"
+        />
+        <button
+          type="submit"
+          className="bg-[#1a1a1a] text-white text-[13px] font-semibold px-5 hover:bg-black transition-colors shrink-0"
+        >
+          Search
+        </button>
+      </form>
 
       {/* Category pills */}
       <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-8">
@@ -176,13 +190,22 @@ function ProductsPageContent() {
           <h2 className="font-[var(--font-heading)] text-[18px] font-bold text-[#1a1a1a] mb-2">
             No Products Found
           </h2>
-          <p className="text-gray-400 text-[14px] max-w-sm mx-auto mb-6">
-            This department is being stocked. Add products via the Supabase
-            dashboard.
-          </p>
-          <p className="text-[12px] text-gray-300">
-            Supabase → Table Editor → products → Insert row
-          </p>
+          {search ? (
+            <p className="text-gray-400 text-[14px] max-w-sm mx-auto mb-6">
+              Nothing matched &quot;{search}&quot;. Try a different search term
+              or browse by category instead.
+            </p>
+          ) : (
+            <>
+              <p className="text-gray-400 text-[14px] max-w-sm mx-auto mb-6">
+                This department is being stocked. Add products via the Supabase
+                dashboard.
+              </p>
+              <p className="text-[12px] text-gray-300">
+                Supabase → Table Editor → products → Insert row
+              </p>
+            </>
+          )}
         </div>
       ) : (
         /* Grid */
@@ -197,17 +220,17 @@ function ProductsPageContent() {
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  toggleLike(product.id);
+                  wishlist.toggle(product);
                 }}
-                className={`heart-btn ${liked.has(product.id) ? "active" : ""}`}
-                aria-label="Add to wishlist"
+                className={`heart-btn ${wishlist.has(product.id) ? "active" : ""}`}
+                aria-label={wishlist.has(product.id) ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <svg
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
-                  fill={liked.has(product.id) ? "#ef4444" : "none"}
-                  stroke={liked.has(product.id) ? "#ef4444" : "#999"}
+                  fill={wishlist.has(product.id) ? "#ef4444" : "none"}
+                  stroke={wishlist.has(product.id) ? "#ef4444" : "#999"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -248,23 +271,17 @@ function ProductsPageContent() {
                     {formatGHS(product.price)}
                   </span>
                   {product.stock > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleCart(product.id);
-                        }}
-                        className={`text-[11px] font-bold text-white bg-[var(--color-brand)] rounded px-2 py-1 hover:bg-[var(--color-brand-dark)] transition-colors ${
-                          cart.has(product.id) ? "active" : ""
-                        }`}
-                        aria-label="Add to cart"
-                      >
-                        Add to Cart
-                      </button>
-                      <span className="text-[10px] text-gray-300">
-                        {cart.has(product.id) ? "Added" : "Cart"}
-                      </span>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
+                      className="text-[11px] font-bold text-white bg-[var(--color-brand)] rounded px-2 py-1 hover:bg-[var(--color-brand-dark)] transition-colors"
+                      aria-label={`Add ${product.name} to cart`}
+                    >
+                      {addedIds.has(product.id) ? "Added ✓" : "Add to Cart"}
+                    </button>
                   ) : (
                     <span className="text-[11px] text-red-500 font-medium">
                       Sold Out

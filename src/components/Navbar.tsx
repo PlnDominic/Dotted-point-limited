@@ -2,21 +2,38 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { CartModal } from "./CartModal";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
   const { itemCount } = useCart();
+  const { count: wishlistCount } = useWishlist();
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    router.push(q ? `/products?search=${encodeURIComponent(q)}` : "/products");
+    setSearchOpen(false);
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -147,24 +164,38 @@ export default function Navbar() {
           <div className="relative flex items-center gap-5">
             {/* Search */}
             <button
+              onClick={() => setSearchOpen((open) => !open)}
               className="text-gray-600 hover:text-[#171717] transition-colors"
-              aria-label="Search"
+              aria-label={searchOpen ? "Close search" : "Search"}
+              aria-expanded={searchOpen}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+              {searchOpen ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              )}
             </button>
 
             {/* Wishlist */}
-            <button
-              className="text-gray-600 hover:text-[#171717] transition-colors hidden sm:block"
+            <Link
+              href="/wishlist"
+              className="relative text-gray-600 hover:text-[#171717] transition-colors hidden sm:block"
               aria-label="Wishlist"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
               </svg>
-            </button>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--color-brand)] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </Link>
 
             {/* Account */}
             {user ? (
@@ -234,6 +265,35 @@ export default function Navbar() {
           </div>
         </nav>
 
+        {/* Search bar */}
+        {searchOpen && (
+          <div className="border-t border-gray-100 bg-white animate-slide-up">
+            <form
+              onSubmit={submitSearch}
+              className="max-w-[1300px] mx-auto px-6 py-3 flex items-center gap-3"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products and services…"
+                className="flex-1 min-w-0 text-[14px] text-[#171717] placeholder:text-gray-400 focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="bg-[var(--color-brand)] text-white text-[13px] font-semibold px-4 py-2 hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        )}
+
         {/* Mobile Nav */}
         {mobileOpen && (
           <div className="lg:hidden border-t border-gray-100 bg-white animate-slide-up">
@@ -260,6 +320,18 @@ export default function Navbar() {
                   {c.label}
                 </Link>
               ))}
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-between py-3 text-[15px] font-medium text-gray-500 border-b border-gray-50"
+              >
+                Wishlist
+                {wishlistCount > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-brand)] text-white text-[11px] font-bold flex items-center justify-center leading-none">
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                  </span>
+                )}
+              </Link>
               {user ? (
                 <button
                   onClick={() => { setMobileOpen(false); handleSignOut(); }}

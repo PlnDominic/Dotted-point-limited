@@ -397,3 +397,62 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION decrement_product_stock(UUID, INTEGER) TO authenticated;
+
+-- ============================================
+-- Wishlist
+-- ============================================
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (user_id, product_id)
+);
+
+ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own wishlist" ON wishlist_items;
+DROP POLICY IF EXISTS "Users can add to their own wishlist" ON wishlist_items;
+DROP POLICY IF EXISTS "Users can remove from their own wishlist" ON wishlist_items;
+
+CREATE POLICY "Users can view their own wishlist"
+  ON wishlist_items FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can add to their own wishlist"
+  ON wishlist_items FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can remove from their own wishlist"
+  ON wishlist_items FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================
+-- Product reviews
+-- ============================================
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT NOT NULL DEFAULT '',
+  reviewer_name TEXT NOT NULL DEFAULT 'Customer',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (product_id, user_id)
+);
+
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Reviews are viewable by everyone" ON reviews;
+DROP POLICY IF EXISTS "Signed-in users can leave their own review" ON reviews;
+DROP POLICY IF EXISTS "Users can update their own review" ON reviews;
+DROP POLICY IF EXISTS "Users can delete their own review, admins any" ON reviews;
+
+CREATE POLICY "Reviews are viewable by everyone"
+  ON reviews FOR SELECT USING (true);
+
+CREATE POLICY "Signed-in users can leave their own review"
+  ON reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own review"
+  ON reviews FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own review, admins any"
+  ON reviews FOR DELETE USING (auth.uid() = user_id OR is_admin());

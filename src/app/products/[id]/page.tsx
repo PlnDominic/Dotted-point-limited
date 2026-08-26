@@ -3,8 +3,70 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Product } from "@/types";
+import type { Product, Review } from "@/types";
+import type { User } from "@supabase/supabase-js";
 import { formatGHS } from "@/lib/currency";
+import { useWishlist } from "@/context/WishlistContext";
+
+function Stars({ value, size = 14 }: { value: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const filled = i + 1 <= Math.round(value);
+        return (
+          <svg
+            key={i}
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill={filled ? "#f59e0b" : "none"}
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+          >
+            <path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z" />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
+function StarPicker({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const star = i + 1;
+        const filled = star <= value;
+        return (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            aria-label={`${star} star${star === 1 ? "" : "s"}`}
+            className="p-0.5"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill={filled ? "#f59e0b" : "none"}
+              stroke="#f59e0b"
+              strokeWidth="1.5"
+            >
+              <path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z" />
+            </svg>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -15,7 +77,15 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState("");
   const [activeImage, setActiveImage] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState("");
   const supabase = createClient();
+  const wishlist = useWishlist();
 
   useEffect(() => {
     async function load() {
@@ -30,6 +100,42 @@ export default function ProductDetailPage() {
     }
     load();
   }, [id, supabase]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, [supabase]);
+
+  async function loadReviews() {
+    setReviewsLoading(true);
+    const { data } = await supabase
+      .from("reviews")
+      .select("*")
+      .eq("product_id", id)
+      .order("created_at", { ascending: false });
+    setReviews((data as Review[]) ?? []);
+    setReviewsLoading(false);
+  }
+
+  useEffect(() => {
+    loadReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const myReview = user ? reviews.find((r) => r.user_id === user.id) : undefined;
+
+  useEffect(() => {
+    if (myReview) {
+      setReviewRating(myReview.rating);
+      setReviewComment(myReview.comment);
+    }
+  }, [myReview]);
+
+  const reviewCount = reviews.length;
+  const averageRating =
+    reviewCount > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+      : product?.rating ?? 0;
+  const displayReviewCount = reviewCount > 0 ? reviewCount : product?.reviews_count ?? 0;
 
   const images =
     product?.image_urls && product.image_urls.length > 0
@@ -56,6 +162,53 @@ export default function ProductDetailPage() {
     setAdding(false);
     setMsg("Added to cart");
     setTimeout(() => setMsg(""), 3000);
+  }
+
+  async function submitReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    if (reviewRating < 1) {
+      setReviewMsg("Pick a star rating first.");
+      return;
+    }
+    setSubmittingReview(true);
+    setReviewMsg("");
+
+    const reviewerName =
+      (user.user_metadata?.full_name as string | undefined) ||
+      user.email?.split("@")[0] ||
+      "Customer";
+
+    const { error } = await supabase.from("reviews").upsert(
+      {
+        product_id: id,
+        user_id: user.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        reviewer_name: reviewerName,
+      },
+      { onConflict: "product_id,user_id" }
+    );
+
+    if (error) {
+      console.error(error);
+      setReviewMsg("Couldn't save your review. Try again.");
+    } else {
+      setReviewMsg("Thanks for your review!");
+      await loadReviews();
+    }
+    setSubmittingReview(false);
+  }
+
+  async function deleteMyReview() {
+    if (!myReview) return;
+    await supabase.from("reviews").delete().eq("id", myReview.id);
+    setReviewRating(0);
+    setReviewComment("");
+    await loadReviews();
   }
 
   if (loading) {
@@ -106,7 +259,7 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
         {/* Image */}
         <div className="animate-scale-in">
-          <div className="aspect-square bg-[#f8f8f8] overflow-hidden">
+          <div className="relative aspect-square bg-[#f8f8f8] overflow-hidden">
             {images.length > 0 ? (
               <img
                 src={images[activeImage] ?? images[0]}
@@ -122,6 +275,24 @@ export default function ProductDetailPage() {
                 </svg>
               </div>
             )}
+            <button
+              onClick={() => wishlist.toggle(product)}
+              className="heart-btn"
+              aria-label={wishlist.has(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill={wishlist.has(product.id) ? "#ef4444" : "none"}
+                stroke={wishlist.has(product.id) ? "#ef4444" : "#999"}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+            </button>
           </div>
           {images.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto">
@@ -147,9 +318,18 @@ export default function ProductDetailPage() {
           <p className="font-[var(--font-heading)] text-[12px] font-bold tracking-[0.12em] text-gray-400 uppercase mb-3">
             {product.category.replace(/-/g, " ")}
           </p>
-          <h1 className="font-[var(--font-heading)] text-[28px] md:text-[34px] font-[800] tracking-[-0.02em] text-[#1a1a1a] mb-4 leading-tight">
+          <h1 className="font-[var(--font-heading)] text-[28px] md:text-[34px] font-[800] tracking-[-0.02em] text-[#1a1a1a] mb-3 leading-tight">
             {product.name}
           </h1>
+
+          {displayReviewCount > 0 && (
+            <a href="#reviews" className="flex items-center gap-2 mb-4">
+              <Stars value={averageRating} />
+              <span className="text-[13px] text-gray-500">
+                {averageRating.toFixed(1)} ({displayReviewCount} review{displayReviewCount === 1 ? "" : "s"})
+              </span>
+            </a>
+          )}
 
           <p className="font-[var(--font-heading)] text-[28px] font-[800] text-[var(--color-brand)] mb-6">
             {formatGHS(product.price)}
@@ -218,6 +398,119 @@ export default function ProductDetailPage() {
             <p className="mt-3 text-[13px] text-green-600 font-medium text-center animate-fade-in">
               ✓ {msg}
             </p>
+          )}
+        </div>
+      </div>
+
+      {/* Reviews */}
+      <div id="reviews" className="mt-16 pt-10 border-t border-gray-100 grid md:grid-cols-2 gap-10 lg:gap-16">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[22px] font-[800] text-[#1a1a1a] mb-1">
+            Customer Reviews
+          </h2>
+          {displayReviewCount > 0 ? (
+            <div className="flex items-center gap-2 mb-6">
+              <Stars value={averageRating} size={16} />
+              <span className="text-[14px] text-gray-500">
+                {averageRating.toFixed(1)} out of 5 · {displayReviewCount} review
+                {displayReviewCount === 1 ? "" : "s"}
+              </span>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-[14px] mb-6">
+              No reviews yet — be the first to share your experience.
+            </p>
+          )}
+
+          {reviewsLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="animate-pulse space-y-2">
+                  <div className="bg-gray-100 h-3 rounded w-1/4" />
+                  <div className="bg-gray-100 h-3 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : reviews.length > 0 ? (
+            <div className="space-y-5 max-h-[480px] overflow-y-auto pr-2">
+              {reviews.map((r) => (
+                <div key={r.id} className="border-b border-gray-100 pb-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a]">
+                      {r.reviewer_name}
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {new Date(r.created_at).toLocaleDateString("en-GH", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <Stars value={r.rating} />
+                  {r.comment && (
+                    <p className="text-gray-600 text-[14px] mt-2 leading-relaxed">{r.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div>
+          <h3 className="font-[var(--font-heading)] text-[16px] font-bold text-[#1a1a1a] mb-4">
+            {myReview ? "Update Your Review" : "Write a Review"}
+          </h3>
+
+          {!user ? (
+            <p className="text-gray-500 text-[14px]">
+              <a href="/auth/login" className="text-[var(--color-brand)] font-semibold hover:underline">
+                Sign in
+              </a>{" "}
+              to leave a review.
+            </p>
+          ) : (
+            <form onSubmit={submitReview} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-2">
+                  Your Rating
+                </label>
+                <StarPicker value={reviewRating} onChange={setReviewRating} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  Your Review (optional)
+                </label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="What did you think of this product or service?"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--color-brand)] resize-y"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="btn-dark py-2.5 px-6 text-[13px] disabled:opacity-40"
+                >
+                  {submittingReview ? "Saving..." : myReview ? "Update Review" : "Submit Review"}
+                </button>
+                {myReview && (
+                  <button
+                    type="button"
+                    onClick={deleteMyReview}
+                    className="text-[12px] text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Delete my review
+                  </button>
+                )}
+              </div>
+              {reviewMsg && (
+                <p className="text-[13px] text-gray-500">{reviewMsg}</p>
+              )}
+            </form>
           )}
         </div>
       </div>

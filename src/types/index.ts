@@ -49,6 +49,24 @@ export interface OrderItem {
   product?: Product;
 }
 
+export interface WishlistItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  created_at: string;
+  product?: Product;
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  rating: number;
+  comment: string;
+  reviewer_name: string;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
