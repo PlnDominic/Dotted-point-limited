@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Product, RecentWorkItem, Capability, HeroContent } from "@/types";
 import type { User } from "@supabase/supabase-js";
-import Image from "next/image";
 import Link from "next/link";
 
 const CATEGORIES = [
@@ -160,14 +159,7 @@ export default function AdminPanel() {
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-3 sm:h-[64px] flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <Image
-                src="/logo.jpg"
-                alt="Dotted Point Limited"
-                width={32}
-                height={32}
-                className="h-7 sm:h-8 w-auto object-contain"
-              />
+            <Link href="/" className="flex items-center shrink-0">
               <span className="text-[15px] sm:text-[16px] font-bold text-[#171717]">Admin</span>
             </Link>
             <span className="text-gray-500 text-[11px] sm:text-[12px] truncate hidden sm:inline">
