@@ -158,36 +158,39 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-[1300px] mx-auto px-6 h-[64px] flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-3 sm:h-[64px] flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Link href="/" className="flex items-center gap-2 shrink-0">
               <Image
                 src="/logo.jpg"
                 alt="Dotted Point Limited"
                 width={32}
                 height={32}
-                className="h-8 w-auto object-contain"
+                className="h-7 sm:h-8 w-auto object-contain"
               />
-              <span className="text-[16px] font-bold text-[#171717]">Admin</span>
+              <span className="text-[15px] sm:text-[16px] font-bold text-[#171717]">Admin</span>
             </Link>
-            <span className="text-gray-500 text-[12px]">
+            <span className="text-gray-500 text-[11px] sm:text-[12px] truncate hidden sm:inline">
               Logged in as: {user.email ?? "unknown"}
             </span>
           </div>
           <button
             onClick={() => supabase.auth.signOut()}
-            className="text-gray-500 hover:text-black px-4 py-2 rounded text-[13px] hover:bg-gray-100 transition-colors"
+            className="text-gray-500 hover:text-black px-3 sm:px-4 py-2 rounded text-[13px] hover:bg-gray-100 transition-colors shrink-0"
             aria-label="Sign out"
           >
             Sign Out
           </button>
+          <span className="text-gray-500 text-[11px] w-full sm:hidden truncate">
+            Logged in as: {user.email ?? "unknown"}
+          </span>
         </div>
-        <div className="max-w-[1300px] mx-auto px-6 flex gap-1 border-t border-gray-50">
+        <div className="max-w-[1300px] mx-auto px-4 sm:px-6 flex gap-1 border-t border-gray-50 overflow-x-auto scrollbar-hide">
           {TABS.map((t) => (
             <button
               key={t.value}
               onClick={() => setTab(t.value)}
-              className={`px-4 py-3 text-[13px] font-semibold border-b-2 transition-colors ${
+              className={`px-3 sm:px-4 py-3 text-[12px] sm:text-[13px] font-semibold border-b-2 whitespace-nowrap shrink-0 transition-colors ${
                 tab === t.value
                   ? "border-[var(--color-brand)] text-[#171717]"
                   : "border-transparent text-gray-500 hover:text-[#171717]"
@@ -199,7 +202,7 @@ export default function AdminPanel() {
         </div>
       </nav>
 
-      <main className="max-w-[1300px] mx-auto px-6 py-8">
+      <main className="max-w-[1300px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {tab === "products" && <ProductsTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "recent-work" && <RecentWorkTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
@@ -304,7 +307,7 @@ function ProductsTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
             Products
@@ -318,7 +321,7 @@ function ProductsTab({
         {mode === "view" && (
           <button
             onClick={() => setMode("add")}
-            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+            className="w-full sm:w-auto bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
           >
             Add Product
           </button>
@@ -409,7 +412,7 @@ function ProductsTab({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">
                   Price (GH₵)
@@ -444,7 +447,7 @@ function ProductsTab({
                 <p className="text-[12px] text-gray-400 -mb-2">
                   Shown on the homepage&apos;s Amazing Offer card
                 </p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">
                       Original Price (GH₵)
@@ -470,7 +473,7 @@ function ProductsTab({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">
                       Rating (0-5)
@@ -662,7 +665,7 @@ function RecentWorkTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
             Recent Work
@@ -674,7 +677,7 @@ function RecentWorkTab({
         {mode === "view" && (
           <button
             onClick={() => setMode("add")}
-            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+            className="w-full sm:w-auto bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
           >
             Add Project
           </button>
@@ -872,7 +875,7 @@ function CapabilitiesTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
             What We Do Best
@@ -884,7 +887,7 @@ function CapabilitiesTab({
         {mode === "view" && (
           <button
             onClick={() => setMode("add")}
-            className="bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
+            className="w-full sm:w-auto bg-[var(--color-brand)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-brand-dark)] transition-colors shrink-0"
           >
             Add Capability
           </button>
@@ -920,7 +923,7 @@ function CapabilitiesTab({
                 className="w-full px-3 py-2 border rounded text-[14px] h-20 resize-y"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">
                   Stat
