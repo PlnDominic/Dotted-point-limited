@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Product, RecentWorkItem, Capability, HeroContent } from "@/types";
+import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
@@ -67,7 +67,7 @@ const EMPTY_CAPABILITY_FORM = {
   description: "",
 };
 
-type Tab = "products" | "recent-work" | "capabilities" | "hero";
+type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
@@ -149,6 +149,7 @@ export default function AdminPanel() {
 
   const TABS: { value: Tab; label: string }[] = [
     { value: "products", label: "Products" },
+    { value: "orders", label: "Orders" },
     { value: "recent-work", label: "Recent Work" },
     { value: "capabilities", label: "What We Do Best" },
     { value: "hero", label: "Homepage Hero" },
@@ -196,6 +197,7 @@ export default function AdminPanel() {
 
       <main className="max-w-[1300px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {tab === "products" && <ProductsTab supabase={supabase} uploadImage={uploadImage} />}
+        {tab === "orders" && <OrdersTab supabase={supabase} />}
         {tab === "recent-work" && <RecentWorkTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "hero" && <HeroTab supabase={supabase} uploadImage={uploadImage} />}
@@ -646,6 +648,269 @@ function ProductsTab({
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Orders ═══════════════════════════ */
+
+const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered"] as const;
+
+const ORDER_STATUS_STYLES: Record<(typeof ORDER_STATUSES)[number], string> = {
+  pending: "bg-yellow-100 text-yellow-700",
+  paid: "bg-blue-100 text-blue-700",
+  shipped: "bg-purple-100 text-purple-700",
+  delivered: "bg-green-100 text-green-700",
+};
+
+type OrderWithItems = Order & {
+  items: (OrderItem & { product: Product | null })[];
+};
+
+function OrdersTab({
+  supabase,
+}: {
+  supabase: ReturnType<typeof createClient>;
+}) {
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"all" | (typeof ORDER_STATUSES)[number]>("all");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchOrders() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, items:order_items(*, product:products(*))")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setOrders((data as OrderWithItems[]) ?? []);
+    setLoading(false);
+  }
+
+  async function updateStatus(orderId: string, status: (typeof ORDER_STATUSES)[number]) {
+    setUpdatingId(orderId);
+    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+    if (error) {
+      console.error(error);
+    } else {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+    }
+    setUpdatingId(null);
+  }
+
+  const filteredOrders =
+    statusFilter === "all" ? orders : orders.filter((o) => o.status === statusFilter);
+
+  const counts = ORDER_STATUSES.reduce(
+    (acc, s) => ({ ...acc, [s]: orders.filter((o) => o.status === s).length }),
+    {} as Record<(typeof ORDER_STATUSES)[number], number>
+  );
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+            Orders
+          </h2>
+          <p className="text-[13px] text-gray-500">
+            Placed at checkout, with the customer&apos;s shipping details attached.
+          </p>
+        </div>
+      </div>
+
+      {/* Status filter pills */}
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-6">
+        <button
+          onClick={() => setStatusFilter("all")}
+          className={`font-[var(--font-heading)] text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 whitespace-nowrap shrink-0 transition-colors ${
+            statusFilter === "all"
+              ? "bg-[var(--color-brand)] text-white"
+              : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
+          }`}
+        >
+          All ({orders.length})
+        </button>
+        {ORDER_STATUSES.map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`font-[var(--font-heading)] text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 whitespace-nowrap shrink-0 capitalize transition-colors ${
+              statusFilter === s
+                ? "bg-[var(--color-brand)] text-white"
+                : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
+            }`}
+          >
+            {s} ({counts[s]})
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded h-24" />
+          ))}
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          {statusFilter === "all" ? "No orders yet." : `No ${statusFilter} orders.`}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {filteredOrders.map((order) => {
+            const isExpanded = expandedId === order.id;
+            return (
+              <div key={order.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                  className="w-full flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-[var(--font-heading)] text-[13px] font-bold text-[#1a1a1a]">
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${ORDER_STATUS_STYLES[order.status]}`}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-gray-500 mt-0.5 truncate">
+                      {order.shipping_name || "Unnamed customer"}
+                      {order.shipping_phone ? ` · ${order.shipping_phone}` : ""}
+                      {" · "}
+                      {new Date(order.created_at).toLocaleDateString("en-GH", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="font-[var(--font-heading)] text-[15px] font-bold text-[#1a1a1a]">
+                      GH₵{order.total.toFixed(2)}
+                    </span>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-100 p-4 grid md:grid-cols-2 gap-6">
+                    {/* Shipping details */}
+                    <div>
+                      <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.08em] mb-2">
+                        Shipping Details
+                      </h4>
+                      <dl className="text-[13px] text-gray-700 space-y-1">
+                        <div className="flex gap-2">
+                          <dt className="text-gray-400 shrink-0 w-16">Name</dt>
+                          <dd>{order.shipping_name || "—"}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="text-gray-400 shrink-0 w-16">Email</dt>
+                          <dd className="break-all">{order.shipping_email || "—"}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="text-gray-400 shrink-0 w-16">Phone</dt>
+                          <dd>{order.shipping_phone || "—"}</dd>
+                        </div>
+                        <div className="flex gap-2">
+                          <dt className="text-gray-400 shrink-0 w-16">Address</dt>
+                          <dd>
+                            {order.shipping_address || "—"}
+                            {order.shipping_city ? `, ${order.shipping_city}` : ""}
+                            {order.shipping_region ? `, ${order.shipping_region}` : ""}
+                          </dd>
+                        </div>
+                        {order.shipping_notes && (
+                          <div className="flex gap-2">
+                            <dt className="text-gray-400 shrink-0 w-16">Notes</dt>
+                            <dd>{order.shipping_notes}</dd>
+                          </div>
+                        )}
+                      </dl>
+
+                      <div className="mt-4">
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                          Update Status
+                        </label>
+                        <select
+                          value={order.status}
+                          disabled={updatingId === order.id}
+                          onChange={(e) =>
+                            updateStatus(order.id, e.target.value as (typeof ORDER_STATUSES)[number])
+                          }
+                          className="w-full sm:w-48 px-3 py-2 border rounded text-[14px] disabled:opacity-50"
+                        >
+                          {ORDER_STATUSES.map((s) => (
+                            <option key={s} value={s} className="capitalize">
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Items */}
+                    <div>
+                      <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.08em] mb-2">
+                        Items
+                      </h4>
+                      <div className="space-y-2">
+                        {order.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-3 text-[13px]">
+                            <div className="w-10 h-10 bg-gray-50 overflow-hidden shrink-0">
+                              {item.product?.image_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.product.image_url}
+                                  alt={item.product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : null}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate">{item.product?.name ?? "Deleted product"}</p>
+                              <p className="text-gray-400 text-[11px]">
+                                Qty {item.quantity} × GH₵{item.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <p className="font-semibold shrink-0">
+                              GH₵{(item.price * item.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

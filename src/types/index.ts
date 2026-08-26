@@ -36,6 +36,7 @@ export interface Order {
   shipping_city?: string | null;
   shipping_region?: string | null;
   shipping_notes?: string | null;
+  shipping_email?: string | null;
   items?: OrderItem[];
 }
 

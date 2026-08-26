@@ -135,6 +135,7 @@ export default function CheckoutPage() {
         user_id: user.id,
         total,
         status: "pending",
+        shipping_email: shipping.email.trim(),
         shipping_name: shipping.fullName.trim(),
         shipping_phone: shipping.phone.trim(),
         shipping_address: shipping.address.trim(),

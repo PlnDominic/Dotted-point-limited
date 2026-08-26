@@ -363,6 +363,10 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_region TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_notes TEXT;
+-- The customer's contact email wasn't captured on the order itself
+-- (only used for the magic-link sign-in), so the admin had no way to
+-- see it without querying auth.users directly. Store it here too.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_email TEXT;
 
 -- ============================================
 -- Multiple images per product
