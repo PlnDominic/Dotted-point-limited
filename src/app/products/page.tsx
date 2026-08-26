@@ -124,7 +124,7 @@ function ProductsPageContent() {
             onClick={() => setCategory(c.value)}
             className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap transition-all duration-200 shrink-0 ${
               category === c.value
-                ? "bg-[#1a1a1a] text-white"
+                ? "bg-[var(--color-brand)] text-white"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-[#1a1a1a]"
             }`}
           >
