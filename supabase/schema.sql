@@ -374,3 +374,26 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_email TEXT;
 -- image_url stays the cover/thumbnail (first image); image_urls holds
 -- the full gallery, including that same cover image as its first entry.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS image_urls TEXT[] DEFAULT '{}';
+
+-- ============================================
+-- Stock decrement on order placement
+-- ============================================
+-- Customers aren't admins, so they can't UPDATE products directly (see
+-- the "Admin users can update products" policy above). This function
+-- is SECURITY DEFINER so it can adjust stock on their behalf while
+-- doing nothing else — it only ever subtracts, and clamps at 0 so
+-- concurrent orders can't drive stock negative.
+CREATE OR REPLACE FUNCTION decrement_product_stock(p_product_id UUID, p_quantity INTEGER)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE products
+  SET stock = GREATEST(stock - p_quantity, 0)
+  WHERE id = p_product_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION decrement_product_stock(UUID, INTEGER) TO authenticated;

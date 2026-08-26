@@ -160,6 +160,22 @@ export default function CheckoutPage() {
     }));
 
     await supabase.from("order_items").insert(orderItems);
+
+    // Decrement stock for each purchased item. Runs via a SECURITY DEFINER
+    // function since customers can't UPDATE products directly (see
+    // decrement_product_stock in supabase/schema.sql).
+    const stockResults = await Promise.all(
+      items.map((item) =>
+        supabase.rpc("decrement_product_stock", {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity,
+        })
+      )
+    );
+    stockResults.forEach(({ error }) => {
+      if (error) console.error("Stock decrement error:", error);
+    });
+
     await clear();
     try {
       window.localStorage.removeItem(DRAFT_KEY);
