@@ -26,6 +26,13 @@ function ProductsPageContent() {
   const supabase = createClient();
   const router = useRouter();
 
+  // Clicking a service/category link while already on this page (e.g. from
+  // the navbar dropdown) changes the URL but doesn't remount this component
+  // — keep the filter in sync with the URL when that happens.
+  useEffect(() => {
+    setCategory(searchParams.get("category") ?? "all");
+  }, [searchParams]);
+
   useEffect(() => {
     async function fetchProducts() {
       let query = supabase
@@ -86,12 +93,16 @@ function ProductsPageContent() {
 
   const categories = [
     { value: "all", label: "All" },
-    { value: "power-tools", label: "Power Tools" },
-    { value: "building-materials", label: "Materials" },
-    { value: "safety", label: "Safety" },
-    { value: "plumbing-electrical", label: "Electrical" },
-    { value: "hardware", label: "Hardware" },
+    { value: "automated-gates", label: "Automated Gates" },
+    { value: "roller-shutters", label: "Garage Roller Shutters" },
+    { value: "iron-mongering", label: "Iron Mongering" },
+    { value: "plasterboard-ceiling", label: "Plasterboard Ceiling" },
+    { value: "painting-decoration", label: "Painting & Decoration" },
+    { value: "kitchen-cabinets", label: "Kitchen Cabinets" },
+    { value: "kitchen-sinks", label: "Kitchen Sinks" },
+    { value: "bathroom-fittings", label: "Bathroom Fittings" },
     { value: "shower-cubicle", label: "Shower Cubicle" },
+    { value: "concrete-blocks", label: "Building Materials" },
     { value: "building-and-construction", label: "Building & Construction" },
     { value: "painting", label: "Painting" },
     { value: "iron-metal-fabrication", label: "Iron Metal Fabrication" },
@@ -101,18 +112,26 @@ function ProductsPageContent() {
     { value: "stainless-balustrade", label: "Stainless Balustrade" },
     { value: "window-glazing", label: "Window Glazing" },
     { value: "curtain-walls", label: "Curtain Walls" },
+    { value: "power-tools", label: "Power Tools" },
+    { value: "safety", label: "Safety" },
+    { value: "plumbing-electrical", label: "Plumbing & Electrical" },
+    { value: "hardware", label: "Hardware" },
   ];
+
+  const activeCategoryLabel =
+    category !== "all" ? categories.find((c) => c.value === category)?.label : undefined;
 
   return (
     <div className="max-w-[1300px] mx-auto px-6 py-10 md:py-14">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-[var(--font-heading)] text-[32px] md:text-[40px] font-[800] tracking-[-0.02em] text-[#1a1a1a] mb-2">
-          Shop All Products
+          {activeCategoryLabel ? activeCategoryLabel : "Shop All Products"}
         </h1>
         <p className="text-gray-500 text-[15px] max-w-lg">
-          Professional-grade tools and materials for every job. Filter by
-          department to find exactly what you need.
+          {activeCategoryLabel
+            ? `Browse everything we offer under ${activeCategoryLabel}.`
+            : "Professional-grade tools and materials for every job. Filter by department to find exactly what you need."}
         </p>
       </div>
 
