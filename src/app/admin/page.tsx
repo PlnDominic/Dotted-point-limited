@@ -38,8 +38,8 @@ const EMPTY_PRODUCT_FORM = {
   description: "",
   price: 0,
   original_price: 0,
-  image_url: "",
-  image_file: null as File | null,
+  image_urls: [] as string[], // already-uploaded images (populated when editing)
+  image_files: [] as File[], // newly picked, not yet uploaded
   category: "",
   stock: 0,
   product_type: "material" as "material" | "service",
@@ -237,19 +237,19 @@ function ProductsTab({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    let imageUrl = form.image_url;
 
-    if (form.image_file) {
-      const uploaded = await uploadImage(form.image_file, "products");
-      if (uploaded) imageUrl = uploaded;
-    }
+    const uploadedUrls = (
+      await Promise.all(form.image_files.map((file) => uploadImage(file, "products")))
+    ).filter((url): url is string => !!url);
+    const allImages = [...form.image_urls, ...uploadedUrls];
 
     const productData = {
       name: form.name,
       description: form.description,
       price: form.price,
       original_price: form.product_type === "material" ? form.original_price || form.price : null,
-      image_url: imageUrl,
+      image_url: allImages[0] ?? "",
+      image_urls: allImages,
       category: form.category,
       stock: form.stock,
       product_type: form.product_type,
@@ -278,8 +278,13 @@ function ProductsTab({
       description: product.description,
       price: product.price,
       original_price: product.original_price ?? product.price,
-      image_url: product.image_url,
-      image_file: null,
+      image_urls:
+        product.image_urls && product.image_urls.length > 0
+          ? product.image_urls
+          : product.image_url
+          ? [product.image_url]
+          : [],
+      image_files: [],
       category: product.category,
       stock: product.stock,
       product_type: product.product_type,
@@ -368,20 +373,75 @@ function ProductsTab({
             </div>
 
             <div>
-              <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
+              <label className="text-[12px] text-gray-500 mb-1 block">
+                Images (first one is the cover shown in listings)
+              </label>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  setForm((prev) => ({ ...prev, image_files: [...prev.image_files, ...files] }));
+                  e.target.value = "";
+                }}
                 className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
               />
-              {(form.image_file || form.image_url) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={form.image_file ? URL.createObjectURL(form.image_file) : form.image_url}
-                  alt="Preview"
-                  className="w-24 h-24 object-cover mt-2"
-                />
+              {(form.image_urls.length > 0 || form.image_files.length > 0) && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.image_urls.map((url, i) => (
+                    <div key={`existing-${url}-${i}`} className="relative w-20 h-20 shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                      {i === 0 && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5">
+                          Cover
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            image_urls: prev.image_urls.filter((_, idx) => idx !== i),
+                          }))
+                        }
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[11px] leading-none flex items-center justify-center"
+                        aria-label={`Remove image ${i + 1}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {form.image_files.map((file, i) => (
+                    <div key={`new-${file.name}-${i}`} className="relative w-20 h-20 shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`New image ${i + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {form.image_urls.length === 0 && i === 0 && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5">
+                          Cover
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            image_files: prev.image_files.filter((_, idx) => idx !== i),
+                          }))
+                        }
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[11px] leading-none flex items-center justify-center"
+                        aria-label={`Remove new image ${i + 1}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 

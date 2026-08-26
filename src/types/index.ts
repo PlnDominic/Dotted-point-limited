@@ -5,6 +5,7 @@ export interface Product {
   price: number;
   original_price?: number | null;
   image_url: string;
+  image_urls?: string[] | null;
   category: string;
   stock: number;
   product_type: "material" | "service";

@@ -363,3 +363,10 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_region TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_notes TEXT;
+
+-- ============================================
+-- Multiple images per product
+-- ============================================
+-- image_url stays the cover/thumbnail (first image); image_urls holds
+-- the full gallery, including that same cover image as its first entry.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_urls TEXT[] DEFAULT '{}';

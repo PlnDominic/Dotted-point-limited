@@ -14,6 +14,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState("");
+  const [activeImage, setActiveImage] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
@@ -24,10 +25,18 @@ export default function ProductDetailPage() {
         .eq("id", id)
         .single();
       setProduct(data);
+      setActiveImage(0);
       setLoading(false);
     }
     load();
   }, [id, supabase]);
+
+  const images =
+    product?.image_urls && product.image_urls.length > 0
+      ? product.image_urls
+      : product?.image_url
+      ? [product.image_url]
+      : [];
 
   async function addToCart() {
     setAdding(true);
@@ -96,16 +105,39 @@ export default function ProductDetailPage() {
 
       <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
         {/* Image */}
-        <div className="aspect-square bg-[#f8f8f8] overflow-hidden animate-scale-in">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-15">
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <circle cx="9" cy="9" r="2" />
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-              </svg>
+        <div className="animate-scale-in">
+          <div className="aspect-square bg-[#f8f8f8] overflow-hidden">
+            {images.length > 0 ? (
+              <img
+                src={images[activeImage] ?? images[0]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-15">
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
+              </div>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto">
+              {images.map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  className={`w-16 h-16 shrink-0 overflow-hidden border-2 transition-colors ${
+                    activeImage === i ? "border-[var(--color-brand)]" : "border-transparent"
+                  }`}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
         </div>
