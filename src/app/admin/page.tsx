@@ -734,8 +734,8 @@ function OrdersTab({
           onClick={() => setStatusFilter("all")}
           className={`font-[var(--font-heading)] text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 whitespace-nowrap shrink-0 transition-colors ${
             statusFilter === "all"
-              ? "bg-[var(--color-brand)] text-white"
-              : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
+              ? "bg-[var(--color-burgundy)] text-white"
+              : "bg-[var(--color-burgundy-light)] text-[var(--color-burgundy)] hover:bg-[var(--color-burgundy)] hover:text-white"
           }`}
         >
           All ({orders.length})
@@ -746,8 +746,8 @@ function OrdersTab({
             onClick={() => setStatusFilter(s)}
             className={`font-[var(--font-heading)] text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 whitespace-nowrap shrink-0 capitalize transition-colors ${
               statusFilter === s
-                ? "bg-[var(--color-brand)] text-white"
-                : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
+                ? "bg-[var(--color-burgundy)] text-white"
+                : "bg-[var(--color-burgundy-light)] text-[var(--color-burgundy)] hover:bg-[var(--color-burgundy)] hover:text-white"
             }`}
           >
             {s} ({counts[s]})
