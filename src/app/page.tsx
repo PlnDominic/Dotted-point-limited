@@ -281,11 +281,7 @@ export default function Home() {
         <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors ${
-              activeCategory === "all"
-                ? "bg-[var(--color-brand)] text-white"
-                : "bg-[var(--color-brand-light)] text-[var(--color-brand)] hover:bg-[var(--color-brand)] hover:text-white"
-            }`}
+            className="font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors bg-[var(--color-burgundy)] text-white hover:bg-[var(--color-burgundy-dark)]"
           >
             All
           </button>
@@ -293,11 +289,7 @@ export default function Home() {
             <button
               key={c.slug}
               onClick={() => setActiveCategory(c.slug)}
-              className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors ${
-                activeCategory === c.slug
-                  ? "bg-[var(--color-brand)] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#171717]"
-              }`}
+              className="font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap shrink-0 transition-colors bg-[var(--color-burgundy)] text-white hover:bg-[var(--color-burgundy-dark)]"
             >
               {c.label}
             </button>
