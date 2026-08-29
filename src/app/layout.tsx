@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
@@ -196,6 +197,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        <WhatsAppButton />
         </WishlistProvider>
         </CartProvider>
       </body>
