@@ -252,13 +252,17 @@ export default function Home() {
     <div>
       {/* ═══════ HERO ═══════ */}
       <section className="relative overflow-hidden h-[260px] lg:h-[340px]">
-        {/* Full-bleed background image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={hero.image}
-          alt="Modern two-storey house with automated gate and driveway"
+        {/* Full-bleed background video, muted/looping so it can autoplay */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster="/videos/hero-poster.jpg"
           className="absolute inset-0 w-full h-full object-cover"
-        />
+        >
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
         {/* Darken for text legibility */}
         <div className="absolute inset-0 bg-black/40" />
 
