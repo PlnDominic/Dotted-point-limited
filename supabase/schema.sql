@@ -564,3 +564,28 @@ REVOKE EXECUTE ON FUNCTION decrement_product_stock(UUID, INTEGER) FROM authentic
 -- total/price.
 DROP POLICY IF EXISTS "Users can create their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can create their own order items" ON order_items;
+
+-- ============================================
+-- Newsletter signups (footer form)
+-- ============================================
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can subscribe" ON newsletter_subscribers;
+DROP POLICY IF EXISTS "Admins can view subscribers" ON newsletter_subscribers;
+
+-- Public signup form: anyone (including anonymous visitors) can insert
+-- their own email, but nobody can read the list back except admins —
+-- there's no user_id to scope a "your own row" SELECT policy to here,
+-- and this is marketing data, not something a visitor should be able
+-- to enumerate.
+CREATE POLICY "Anyone can subscribe"
+  ON newsletter_subscribers FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Admins can view subscribers"
+  ON newsletter_subscribers FOR SELECT USING (is_admin());

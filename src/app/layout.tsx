@@ -4,6 +4,7 @@ import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import NewsletterForm from "@/components/NewsletterForm";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
@@ -154,22 +155,7 @@ export default function RootLayout({
                 <p className="text-[13px] text-gray-400 mb-4 leading-relaxed">
                   Get project tips, completed work and consulting offers.
                 </p>
-                <div className="flex max-w-sm">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 min-w-0 bg-white/10 border border-white/10 rounded-l-md px-4 py-2.5 text-[13px] text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30"
-                  />
-                  <button
-                    className="bg-[var(--color-brand)] text-white px-4 font-bold text-[14px] hover:bg-[var(--color-brand-dark)] transition-colors rounded-r-md"
-                    aria-label="Subscribe"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14" />
-                      <path d="m12 5 7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
+                <NewsletterForm />
               </div>
             </div>
           </div>
