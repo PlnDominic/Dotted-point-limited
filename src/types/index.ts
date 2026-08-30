@@ -67,6 +67,12 @@ export interface Review {
   created_at: string;
 }
 
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;

@@ -578,6 +578,7 @@ ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anyone can subscribe" ON newsletter_subscribers;
 DROP POLICY IF EXISTS "Admins can view subscribers" ON newsletter_subscribers;
+DROP POLICY IF EXISTS "Admins can remove subscribers" ON newsletter_subscribers;
 
 -- Public signup form: anyone (including anonymous visitors) can insert
 -- their own email, but nobody can read the list back except admins —
@@ -589,3 +590,6 @@ CREATE POLICY "Anyone can subscribe"
 
 CREATE POLICY "Admins can view subscribers"
   ON newsletter_subscribers FOR SELECT USING (is_admin());
+
+CREATE POLICY "Admins can remove subscribers"
+  ON newsletter_subscribers FOR DELETE USING (is_admin());

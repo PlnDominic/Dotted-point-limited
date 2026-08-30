@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem } from "@/types";
+import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem, NewsletterSubscriber } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
@@ -67,7 +67,7 @@ const EMPTY_CAPABILITY_FORM = {
   description: "",
 };
 
-type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero";
+type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero" | "subscribers";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
@@ -153,6 +153,7 @@ export default function AdminPanel() {
     { value: "recent-work", label: "Recent Work" },
     { value: "capabilities", label: "What We Do Best" },
     { value: "hero", label: "Homepage Hero" },
+    { value: "subscribers", label: "Subscribers" },
   ];
 
   return (
@@ -201,6 +202,7 @@ export default function AdminPanel() {
         {tab === "recent-work" && <RecentWorkTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "hero" && <HeroTab supabase={supabase} uploadImage={uploadImage} />}
+        {tab === "subscribers" && <SubscribersTab supabase={supabase} />}
       </main>
     </div>
   );
@@ -1515,6 +1517,135 @@ function HeroTab({
           )}
         </form>
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Subscribers ═══════════════════════════ */
+
+function SubscribersTab({
+  supabase,
+}: {
+  supabase: ReturnType<typeof createClient>;
+}) {
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchSubscribers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchSubscribers() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("newsletter_subscribers")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setSubscribers((data as NewsletterSubscriber[]) ?? []);
+    setLoading(false);
+  }
+
+  async function removeSubscriber(id: string) {
+    setDeletingId(id);
+    const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
+    if (error) console.error(error);
+    else setSubscribers((prev) => prev.filter((s) => s.id !== id));
+    setDeletingId(null);
+  }
+
+  async function copyAllEmails() {
+    const emails = filtered.map((s) => s.email).join(", ");
+    try {
+      await navigator.clipboard.writeText(emails);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const filtered = subscribers.filter((s) =>
+    s.email.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+            Subscribers
+          </h2>
+          <p className="text-[13px] text-gray-500">
+            Everyone who signed up via the homepage footer&apos;s newsletter form.
+          </p>
+        </div>
+        {subscribers.length > 0 && (
+          <button
+            onClick={copyAllEmails}
+            className="w-full sm:w-auto bg-[var(--color-burgundy)] text-white px-4 py-2 rounded text-[13px] hover:bg-[var(--color-burgundy-dark)] transition-colors shrink-0"
+          >
+            {copied ? "Copied!" : `Copy All Emails (${subscribers.length})`}
+          </button>
+        )}
+      </div>
+
+      {subscribers.length > 0 && (
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by email"
+          className="w-full sm:max-w-xs px-3 py-2 border rounded text-[14px] mb-6"
+        />
+      )}
+
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse bg-white rounded h-12" />
+          ))}
+        </div>
+      ) : subscribers.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          No subscribers yet.
+        </p>
+      ) : filtered.length === 0 ? (
+        <p className="text-gray-500 text-[14px] py-12 text-center">
+          No subscribers match &quot;{search}&quot;.
+        </p>
+      ) : (
+        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+          {filtered.map((s) => (
+            <div
+              key={s.id}
+              className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-50 last:border-0"
+            >
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium text-[#1a1a1a] truncate">{s.email}</p>
+                <p className="text-[11px] text-gray-400">
+                  {new Date(s.created_at).toLocaleDateString("en-GH", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <button
+                onClick={() => removeSubscriber(s.id)}
+                disabled={deletingId === s.id}
+                className="text-[12px] text-gray-400 hover:text-red-500 transition-colors shrink-0 disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
