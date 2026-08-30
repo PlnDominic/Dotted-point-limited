@@ -8,10 +8,32 @@ import NewsletterForm from "@/components/NewsletterForm";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
+// Falls back to the site's default Vercel domain if NEXT_PUBLIC_SITE_URL
+// isn't set — set that env var to your real (custom) domain if you have
+// one, so absolute URLs in metadata/Open Graph tags point to the right
+// place.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://dotted-point-limited.vercel.app";
+
+const SITE_NAME = "Dotted Point Limited";
+const SITE_DESCRIPTION =
+  "A Ghanaian building, fabrication and interior finishing company - automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: modified blocks, roofing sheets, floor tiles, kitchen sinks, WC, baths, taps and more.";
+
 export const metadata: Metadata = {
-  title: "Dotted Point Limited - Building, Fabrication & Interior Finishing",
-  description:
-    "A Ghanaian building, fabrication and interior finishing company - automated gates, garage roller shutters, iron mongering, plasterboard ceilings, painting and decoration, kitchen cabinets, plus everything to construct an entire building: modified blocks, roofing sheets, floor tiles, kitchen sinks, WC, baths, taps and more.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} - Building, Fabrication & Interior Finishing`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en_GH",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {
