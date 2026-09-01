@@ -162,6 +162,14 @@ export default function CheckoutPage() {
       // ignore
     }
 
+    // Best-effort — the order is already placed either way, so a failure
+    // here (e.g. SMTP not configured yet) shouldn't block checkout success.
+    fetch("/api/send-order-confirmation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: order.id }),
+    }).catch((err) => console.error("Order confirmation email error:", err));
+
     setOrderId(order.id);
     setSuccess(true);
     setPlacing(false);
