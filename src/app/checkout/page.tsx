@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { formatGHS } from "@/lib/currency";
 import { useCart } from "@/context/CartContext";
+import { validateShipping, type ShippingDetails } from "@/lib/validateShipping";
 
 const GHANA_REGIONS = [
   "Ahafo",
@@ -24,16 +25,6 @@ const GHANA_REGIONS = [
   "Western",
   "Western North",
 ];
-
-type ShippingDetails = {
-  email: string;
-  fullName: string;
-  phone: string;
-  address: string;
-  city: string;
-  region: string;
-  notes: string;
-};
 
 const emptyShipping: ShippingDetails = {
   email: "",
@@ -88,13 +79,7 @@ export default function CheckoutPage() {
   }
 
   function validate(): boolean {
-    const next: Partial<Record<keyof ShippingDetails, string>> = {};
-    if (!shipping.email.trim()) next.email = "Email is required";
-    if (!shipping.fullName.trim()) next.fullName = "Full name is required";
-    if (!shipping.phone.trim()) next.phone = "Phone number is required";
-    if (!shipping.address.trim()) next.address = "Delivery address is required";
-    if (!shipping.city.trim()) next.city = "Town / city is required";
-    if (!shipping.region.trim()) next.region = "Region is required";
+    const next = validateShipping(shipping);
     setErrors(next);
     return Object.keys(next).length === 0;
   }
