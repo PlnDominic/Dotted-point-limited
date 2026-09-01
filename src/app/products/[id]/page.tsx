@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Product, Review } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import { formatGHS } from "@/lib/currency";
 import { useWishlist } from "@/context/WishlistContext";
+import { useCart } from "@/context/CartContext";
 
 function Stars({ value, size = 14 }: { value: number; size?: number }) {
   return (
@@ -84,8 +86,12 @@ export default function ProductDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewMsg, setReviewMsg] = useState("");
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(true);
+  const [addedRelatedIds, setAddedRelatedIds] = useState<Set<string>>(new Set());
   const supabase = createClient();
   const wishlist = useWishlist();
+  const { addItem } = useCart();
 
   useEffect(() => {
     async function load() {
@@ -100,6 +106,40 @@ export default function ProductDetailPage() {
     }
     load();
   }, [id, supabase]);
+
+  useEffect(() => {
+    if (!product) return;
+    let cancelled = false;
+    setRelatedLoading(true);
+    supabase
+      .from("products")
+      .select("*")
+      .eq("category", product.category)
+      .neq("id", product.id)
+      .order("created_at", { ascending: false })
+      .limit(8)
+      .then(({ data }) => {
+        if (!cancelled) {
+          setRelatedProducts((data as Product[]) ?? []);
+          setRelatedLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product, supabase]);
+
+  function handleAddRelatedToCart(p: Product) {
+    addItem(p);
+    setAddedRelatedIds((prev) => new Set(prev).add(p.id));
+    window.setTimeout(() => {
+      setAddedRelatedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(p.id);
+        return next;
+      });
+    }, 1500);
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -401,6 +441,79 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Related Products */}
+      {(relatedLoading || relatedProducts.length > 0) && (
+        <div className="mt-16 pt-10 border-t border-gray-100">
+          <h2 className="font-[var(--font-heading)] text-[22px] font-[800] text-[#1a1a1a] mb-6">
+            You May Also Like
+          </h2>
+          {relatedLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-100 aspect-square mb-3" />
+                  <div className="bg-gray-100 h-3 rounded w-2/3 mb-2" />
+                  <div className="bg-gray-100 h-3 rounded w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {relatedProducts.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/products/${p.id}`}
+                  className="product-card relative group"
+                >
+                  <div className="aspect-square bg-[#f8f8f8] overflow-hidden">
+                    {p.image_url ? (
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-20">
+                          <rect width="18" height="18" x="3" y="3" rx="2" />
+                          <circle cx="9" cy="9" r="2" />
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 md:p-4">
+                    <h3 className="font-[var(--font-heading)] text-[13px] font-semibold text-[#1a1a1a] mb-0.5 truncate">
+                      {p.name}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="font-[var(--font-heading)] text-[14px] font-bold text-[#1a1a1a]">
+                        {formatGHS(p.price)}
+                      </span>
+                      {p.stock > 0 ? (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddRelatedToCart(p);
+                          }}
+                          className="text-[11px] font-bold text-white bg-[var(--color-brand)] rounded px-2 py-1 hover:bg-[var(--color-brand-dark)] transition-colors"
+                          aria-label={`Add ${p.name} to cart`}
+                        >
+                          {addedRelatedIds.has(p.id) ? "Added ✓" : "Add to Cart"}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-red-500 font-medium">Sold Out</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Reviews */}
       <div id="reviews" className="mt-16 pt-10 border-t border-gray-100 grid md:grid-cols-2 gap-10 lg:gap-16">
