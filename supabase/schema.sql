@@ -458,20 +458,58 @@ CREATE POLICY "Users can delete their own review, admins any"
   ON reviews FOR DELETE USING (auth.uid() = user_id OR is_admin());
 
 -- ============================================
--- Delivery fee by region
+-- Delivery fee by region (admin-editable)
 -- ============================================
--- Flat rate: cheaper within Greater Accra (where Dotted Point is based),
--- flat higher rate everywhere else. This is the source of truth for
--- pricing — place_order() calls it server-side, so the fee can't be
--- forged from the browser console. src/lib/shipping.ts mirrors this
--- schedule client-side purely so checkout can show the fee before the
--- order is placed; keep the two in sync if the schedule ever changes.
+-- One row per Ghana region, fee set by the admin in
+-- /admin → Delivery Fees. shipping_fee_for_region() (used by
+-- place_order(), server-side, so it can't be forged from the browser
+-- console) and the checkout page both read this table directly, so
+-- there's a single source of truth — no schedule to keep in sync.
+CREATE TABLE IF NOT EXISTS shipping_fees (
+  region TEXT PRIMARY KEY,
+  fee DECIMAL(10,2) NOT NULL DEFAULT 0
+);
+
+-- Seed all 16 regions with a starting fee (cheaper for Greater Accra,
+-- where Dotted Point is based) — safe to re-run, only fills in rows
+-- that don't exist yet, never overwrites a fee the admin has since set.
+INSERT INTO shipping_fees (region, fee)
+VALUES
+  ('Ahafo', 80.00),
+  ('Ashanti', 80.00),
+  ('Bono', 80.00),
+  ('Bono East', 80.00),
+  ('Central', 80.00),
+  ('Eastern', 80.00),
+  ('Greater Accra', 30.00),
+  ('North East', 80.00),
+  ('Northern', 80.00),
+  ('Oti', 80.00),
+  ('Savannah', 80.00),
+  ('Upper East', 80.00),
+  ('Upper West', 80.00),
+  ('Volta', 80.00),
+  ('Western', 80.00),
+  ('Western North', 80.00)
+ON CONFLICT (region) DO NOTHING;
+
+ALTER TABLE shipping_fees ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Shipping fees are viewable by everyone" ON shipping_fees;
+DROP POLICY IF EXISTS "Admins can update shipping fees" ON shipping_fees;
+
+CREATE POLICY "Shipping fees are viewable by everyone"
+  ON shipping_fees FOR SELECT USING (true);
+
+CREATE POLICY "Admins can update shipping fees"
+  ON shipping_fees FOR UPDATE USING (is_admin());
+
 CREATE OR REPLACE FUNCTION shipping_fee_for_region(p_region TEXT)
 RETURNS DECIMAL(10,2)
 LANGUAGE sql
-IMMUTABLE
+STABLE
 AS $$
-  SELECT CASE WHEN p_region = 'Greater Accra' THEN 30.00 ELSE 80.00 END;
+  SELECT COALESCE((SELECT fee FROM shipping_fees WHERE region = p_region), 0);
 $$;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0;

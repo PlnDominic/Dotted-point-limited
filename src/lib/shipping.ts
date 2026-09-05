@@ -1,12 +1,13 @@
-// Ghana regions + delivery fee schedule for checkout.
+// Ghana regions for checkout, plus a helper for looking up the
+// admin-set delivery fee for a region.
 //
-// Flat-rate by region: Greater Accra (where Dotted Point is based) is
-// cheaper to deliver to than everywhere else. This mirrors the
-// shipping_fee_for_region() SQL function in supabase/schema.sql — that
-// function is the source of truth (it's what actually prices the order),
-// this copy exists purely so the checkout page can show the fee/total
-// before placing the order without a round trip. Keep the two in sync if
-// the schedule ever changes.
+// The fee itself lives in the `shipping_fees` table (one row per
+// region, edited by the admin in /admin → Delivery Fees) — there's no
+// hardcoded schedule here. place_order() reads it server-side via
+// shipping_fee_for_region() (see supabase/schema.sql), so the fee
+// actually charged can't be forged from the browser console; the
+// checkout page fetches the same table just to show the fee/total
+// before the order is placed.
 
 export const GHANA_REGIONS = [
   "Ahafo",
@@ -27,9 +28,8 @@ export const GHANA_REGIONS = [
   "Western North",
 ] as const;
 
-const LOCAL_REGION_FEE = 30;
-const OUT_OF_TOWN_FEE = 80;
+export type ShippingFeeMap = Record<string, number>;
 
-export function getShippingFee(region: string): number {
-  return region === "Greater Accra" ? LOCAL_REGION_FEE : OUT_OF_TOWN_FEE;
+export function getShippingFee(fees: ShippingFeeMap, region: string): number {
+  return fees[region] ?? 0;
 }

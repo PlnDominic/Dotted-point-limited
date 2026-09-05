@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatGHS } from "@/lib/currency";
 import { useCart } from "@/context/CartContext";
 import { validateShipping, type ShippingDetails } from "@/lib/validateShipping";
-import { GHANA_REGIONS, getShippingFee } from "@/lib/shipping";
+import { GHANA_REGIONS, getShippingFee, type ShippingFeeMap } from "@/lib/shipping";
 
 const emptyShipping: ShippingDetails = {
   email: "",
@@ -28,8 +28,25 @@ export default function CheckoutPage() {
   const [awaitingSignIn, setAwaitingSignIn] = useState(false);
   const [shipping, setShipping] = useState<ShippingDetails>(emptyShipping);
   const [errors, setErrors] = useState<Partial<Record<keyof ShippingDetails, string>>>({});
+  const [shippingFees, setShippingFees] = useState<ShippingFeeMap>({});
   const router = useRouter();
   const supabase = createClient();
+
+  // Admin-set delivery fee per region (see /admin → Delivery Fees). Fetched
+  // once — only for display before the order is placed; the fee actually
+  // charged is looked up server-side in place_order().
+  useEffect(() => {
+    supabase
+      .from("shipping_fees")
+      .select("region, fee")
+      .then(({ data }) => {
+        if (!data) return;
+        setShippingFees(
+          Object.fromEntries(data.map((row) => [row.region, row.fee]))
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Restore an in-progress shipping form (e.g. after leaving to click a
   // magic-link email) and prefill the signed-in user's email if we have one.
@@ -67,9 +84,9 @@ export default function CheckoutPage() {
   }
 
   // Just for display before the order is placed — the authoritative fee is
-  // computed server-side in place_order() from the same schedule (see
-  // src/lib/shipping.ts).
-  const shippingFee = shipping.region ? getShippingFee(shipping.region) : 0;
+  // looked up server-side in place_order() from the same shipping_fees
+  // table (see supabase/schema.sql).
+  const shippingFee = shipping.region ? getShippingFee(shippingFees, shipping.region) : 0;
   const total = subtotal + shippingFee;
 
   async function placeOrder() {

@@ -50,6 +50,11 @@ export interface OrderItem {
   product?: Product;
 }
 
+export interface ShippingFee {
+  region: string;
+  fee: number;
+}
+
 export interface WishlistItem {
   id: string;
   user_id: string;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem, NewsletterSubscriber } from "@/types";
+import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem, NewsletterSubscriber, ShippingFee } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
@@ -67,7 +67,7 @@ const EMPTY_CAPABILITY_FORM = {
   description: "",
 };
 
-type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero" | "subscribers";
+type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero" | "subscribers" | "delivery-fees";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
@@ -154,6 +154,7 @@ export default function AdminPanel() {
     { value: "capabilities", label: "What We Do Best" },
     { value: "hero", label: "Homepage Hero" },
     { value: "subscribers", label: "Subscribers" },
+    { value: "delivery-fees", label: "Delivery Fees" },
   ];
 
   return (
@@ -203,6 +204,7 @@ export default function AdminPanel() {
         {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "hero" && <HeroTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "subscribers" && <SubscribersTab supabase={supabase} />}
+        {tab === "delivery-fees" && <DeliveryFeesTab supabase={supabase} />}
       </main>
     </div>
   );
@@ -1652,6 +1654,107 @@ function SubscribersTab({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Delivery Fees ═══════════════════════════ */
+
+function DeliveryFeesTab({
+  supabase,
+}: {
+  supabase: ReturnType<typeof createClient>;
+}) {
+  const [fees, setFees] = useState<ShippingFee[]>([]);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [savingRegion, setSavingRegion] = useState<string | null>(null);
+  const [savedRegion, setSavedRegion] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchFees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchFees() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("shipping_fees")
+      .select("*")
+      .order("region", { ascending: true });
+    if (error) console.error(error);
+    else setFees((data as ShippingFee[]) ?? []);
+    setLoading(false);
+  }
+
+  async function saveFee(region: string) {
+    const raw = edits[region];
+    const fee = Number(raw);
+    if (raw === undefined || Number.isNaN(fee) || fee < 0) return;
+
+    setSavingRegion(region);
+    const { error } = await supabase
+      .from("shipping_fees")
+      .update({ fee })
+      .eq("region", region);
+
+    if (error) {
+      console.error(error);
+    } else {
+      setFees((prev) => prev.map((f) => (f.region === region ? { ...f, fee } : f)));
+      setSavedRegion(region);
+      setTimeout(() => setSavedRegion((r) => (r === region ? null : r)), 1500);
+    }
+    setSavingRegion(null);
+  }
+
+  if (loading) return <p className="text-gray-400 text-[14px]">Loading...</p>;
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+          Delivery Fees
+        </h2>
+        <p className="text-[13px] text-gray-500">
+          Set the delivery fee charged at checkout for each region. Changes
+          apply to orders placed after saving.
+        </p>
+      </div>
+
+      <div className="bg-white border rounded divide-y max-w-lg">
+        {fees.map((f) => {
+          const value = edits[f.region] ?? String(f.fee);
+          const dirty = value !== String(f.fee);
+          return (
+            <div key={f.region} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex-1 text-[14px] text-[#1a1a1a]">{f.region}</span>
+              <span className="text-gray-400 text-[13px]">GH₵</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={value}
+                onChange={(e) =>
+                  setEdits((prev) => ({ ...prev, [f.region]: e.target.value }))
+                }
+                className="w-24 px-2 py-1.5 border rounded text-[14px] text-right"
+              />
+              <button
+                onClick={() => saveFee(f.region)}
+                disabled={!dirty || savingRegion === f.region}
+                className="text-[12px] font-semibold text-white bg-[var(--color-burgundy)] rounded px-3 py-1.5 hover:bg-[var(--color-burgundy-dark)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 w-16 text-center"
+              >
+                {savingRegion === f.region
+                  ? "..."
+                  : savedRegion === f.region
+                  ? "Saved"
+                  : "Save"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
