@@ -1,35 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function AdminLoginPage() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
+export default function AdminResetPasswordPage() {
+  const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const supabase = createClient();
 
+  // The /auth/callback route exchanges the reset-link code for a session
+  // before redirecting here, so by the time this page renders the user
+  // should already be signed in as whoever the link was sent to. If
+  // there's no session (link expired, or someone just typed this URL),
+  // send them back to request a fresh one.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.replace("/admin/forgot-password");
+      } else {
+        setReady(true);
+      }
+    });
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
-    const { error } =
-      mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/admin");
+      setDone(true);
+      setLoading(false);
+      setTimeout(() => router.push("/admin"), 1500);
     }
+  }
+
+  if (!ready) return null;
+
+  if (done) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md animate-scale-in">
+          <h1 className="font-display text-3xl tracking-tight mb-4">
+            Password Updated
+          </h1>
+          <p className="text-[var(--fg-secondary)] leading-relaxed">
+            Taking you to the dashboard...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -38,12 +79,10 @@ export default function AdminLoginPage() {
         <div className="mb-10">
           <div className="w-12 h-1 bg-[var(--accent)] mb-6" />
           <h1 className="font-display text-3xl md:text-4xl tracking-tight mb-3">
-            {mode === "signin" ? "Admin Sign In" : "Create Admin Account"}
+            Set New Password
           </h1>
           <p className="text-[var(--fg-secondary)]">
-            {mode === "signin"
-              ? "Sign in with your admin email and password."
-              : "Create an account with email and password. Note: you'll only get into the dashboard if this email is on the admin allowlist."}
+            Choose a new password for your admin account.
           </p>
         </div>
 
@@ -53,28 +92,10 @@ export default function AdminLoginPage() {
         >
           <div className="mb-6">
             <label
-              htmlFor="email"
-              className="block font-display text-xs tracking-[0.15em] text-[var(--fg-muted)] mb-3"
-            >
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              required
-              className="w-full bg-transparent border border-[var(--border)] px-4 py-3 text-[var(--fg-primary)] placeholder:text-[var(--fg-muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-colors"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label
               htmlFor="password"
               className="block font-display text-xs tracking-[0.15em] text-[var(--fg-muted)] mb-3"
             >
-              Password
+              New Password
             </label>
             <input
               id="password"
@@ -86,14 +107,25 @@ export default function AdminLoginPage() {
               minLength={6}
               className="w-full bg-transparent border border-[var(--border)] px-4 py-3 text-[var(--fg-primary)] placeholder:text-[var(--fg-muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-colors"
             />
-            {mode === "signin" && (
-              <Link
-                href="/admin/forgot-password"
-                className="block text-right text-xs text-[var(--fg-muted)] hover:text-[var(--fg-primary)] underline mt-2"
-              >
-                Forgot password?
-              </Link>
-            )}
+          </div>
+
+          <div className="mb-6">
+            <label
+              htmlFor="confirmPassword"
+              className="block font-display text-xs tracking-[0.15em] text-[var(--fg-muted)] mb-3"
+            >
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              className="w-full bg-transparent border border-[var(--border)] px-4 py-3 text-[var(--fg-primary)] placeholder:text-[var(--fg-muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-colors"
+            />
           </div>
 
           {error && (
@@ -107,46 +139,17 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="btn-primary w-full py-4 text-base disabled:opacity-40"
           >
-            {loading
-              ? mode === "signin"
-                ? "Signing In..."
-                : "Creating Account..."
-              : mode === "signin"
-                ? "Sign In"
-                : "Create Account"}
+            {loading ? "Updating..." : "Update Password"}
           </button>
         </form>
 
         <p className="text-center text-sm text-[var(--fg-muted)] mt-8">
-          {mode === "signin" ? (
-            <>
-              Need an admin account?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError("");
-                }}
-                className="text-[var(--fg-primary)] underline hover:no-underline"
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setError("");
-                }}
-                className="text-[var(--fg-primary)] underline hover:no-underline"
-              >
-                Sign in
-              </button>
-            </>
-          )}
+          <Link
+            href="/admin/login"
+            className="text-[var(--fg-primary)] underline hover:no-underline"
+          >
+            Back to Sign In
+          </Link>
         </p>
       </div>
     </div>
