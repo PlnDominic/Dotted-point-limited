@@ -6,25 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatGHS } from "@/lib/currency";
 import { useCart } from "@/context/CartContext";
 import { validateShipping, type ShippingDetails } from "@/lib/validateShipping";
-
-const GHANA_REGIONS = [
-  "Ahafo",
-  "Ashanti",
-  "Bono",
-  "Bono East",
-  "Central",
-  "Eastern",
-  "Greater Accra",
-  "North East",
-  "Northern",
-  "Oti",
-  "Savannah",
-  "Upper East",
-  "Upper West",
-  "Volta",
-  "Western",
-  "Western North",
-];
+import { GHANA_REGIONS, getShippingFee } from "@/lib/shipping";
 
 const emptyShipping: ShippingDetails = {
   email: "",
@@ -84,7 +66,11 @@ export default function CheckoutPage() {
     return Object.keys(next).length === 0;
   }
 
-  const total = subtotal;
+  // Just for display before the order is placed — the authoritative fee is
+  // computed server-side in place_order() from the same schedule (see
+  // src/lib/shipping.ts).
+  const shippingFee = shipping.region ? getShippingFee(shipping.region) : 0;
+  const total = subtotal + shippingFee;
 
   async function placeOrder() {
     if (!validate()) return;
@@ -422,6 +408,12 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span className="text-[var(--fg-secondary)]">Subtotal</span>
                 <span className="font-display">{formatGHS(subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--fg-secondary)]">Delivery Fee</span>
+                <span className="font-display">
+                  {shipping.region ? formatGHS(shippingFee) : "Select a region"}
+                </span>
               </div>
             </div>
 

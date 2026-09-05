@@ -458,6 +458,25 @@ CREATE POLICY "Users can delete their own review, admins any"
   ON reviews FOR DELETE USING (auth.uid() = user_id OR is_admin());
 
 -- ============================================
+-- Delivery fee by region
+-- ============================================
+-- Flat rate: cheaper within Greater Accra (where Dotted Point is based),
+-- flat higher rate everywhere else. This is the source of truth for
+-- pricing — place_order() calls it server-side, so the fee can't be
+-- forged from the browser console. src/lib/shipping.ts mirrors this
+-- schedule client-side purely so checkout can show the fee before the
+-- order is placed; keep the two in sync if the schedule ever changes.
+CREATE OR REPLACE FUNCTION shipping_fee_for_region(p_region TEXT)
+RETURNS DECIMAL(10,2)
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE WHEN p_region = 'Greater Accra' THEN 30.00 ELSE 80.00 END;
+$$;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+-- ============================================
 -- Security fix: server-computed order pricing + stock
 -- ============================================
 -- Previously the client inserted orders/order_items directly, supplying
@@ -492,6 +511,7 @@ DECLARE
   v_quantity INTEGER;
   v_price DECIMAL(10,2);
   v_total DECIMAL(10,2) := 0;
+  v_shipping_fee DECIMAL(10,2);
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
@@ -519,13 +539,16 @@ BEGIN
     v_total := v_total + (v_price * v_quantity);
   END LOOP;
 
+  v_shipping_fee := shipping_fee_for_region(p_shipping_region);
+  v_total := v_total + v_shipping_fee;
+
   INSERT INTO orders (
-    user_id, total, status,
+    user_id, total, shipping_fee, status,
     shipping_email, shipping_name, shipping_phone,
     shipping_address, shipping_city, shipping_region, shipping_notes
   )
   VALUES (
-    auth.uid(), v_total, 'pending',
+    auth.uid(), v_total, v_shipping_fee, 'pending',
     p_shipping_email, p_shipping_name, p_shipping_phone,
     p_shipping_address, p_shipping_city, p_shipping_region, p_shipping_notes
   )

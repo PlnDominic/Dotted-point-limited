@@ -907,6 +907,12 @@ function OrdersTab({
                           </div>
                         ))}
                       </div>
+                      <div className="flex items-center justify-between text-[13px] mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-gray-500">Delivery Fee</span>
+                        <span className="font-semibold">
+                          GH₵{order.shipping_fee.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

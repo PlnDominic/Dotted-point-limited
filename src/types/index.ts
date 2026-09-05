@@ -28,6 +28,7 @@ export interface Order {
   id: string;
   user_id: string;
   total: number;
+  shipping_fee: number;
   status: "pending" | "paid" | "shipped" | "delivered";
   created_at: string;
   shipping_name?: string | null;

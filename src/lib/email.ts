@@ -12,6 +12,7 @@ type OrderConfirmationInput = {
   customerEmail: string;
   customerName: string;
   total: number;
+  shippingFee: number;
   items: OrderConfirmationItem[];
   shippingAddress: string;
   shippingCity: string;
@@ -87,6 +88,9 @@ export async function sendOrderConfirmationEmail(
         </thead>
         <tbody>${itemRows}</tbody>
       </table>
+      <p style="text-align:right;font-size:14px;color:#555;margin:4px 0;">
+        Delivery Fee: ${formatGHS(input.shippingFee)}
+      </p>
       <p style="text-align:right;font-size:16px;font-weight:bold;">
         Total: ${formatGHS(input.total)}
       </p>
