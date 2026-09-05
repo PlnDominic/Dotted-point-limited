@@ -18,13 +18,17 @@ export default function ProductsPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(searchParams.get("category") ?? "all");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [searchInput, setSearchInput] = useState(search);
+  const [page, setPage] = useState(Math.max(1, Number(searchParams.get("page")) || 1));
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const supabase = createClient();
   const router = useRouter();
@@ -39,15 +43,19 @@ function ProductsPageContent() {
     setCategory(searchParams.get("category") ?? "all");
     setSearch(nextSearch);
     setSearchInput(nextSearch);
+    setPage(Math.max(1, Number(searchParams.get("page")) || 1));
   }, [searchParams]);
 
   useEffect(() => {
     async function fetchProducts() {
       setLoading(true);
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
       let query = supabase
         .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (category !== "all") {
         query = query.eq("category", category);
       }
@@ -55,12 +63,27 @@ function ProductsPageContent() {
         const term = search.trim().replace(/[%_]/g, "");
         query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
       }
-      const { data } = await query;
+      const { data, count } = await query;
       setProducts(data ?? []);
+      setTotalCount(count ?? 0);
       setLoading(false);
     }
     fetchProducts();
-  }, [category, search, supabase]);
+  }, [category, search, page, supabase]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function goToPage(nextPage: number) {
+    const clamped = Math.min(Math.max(1, nextPage), totalPages);
+    const params = new URLSearchParams(searchParams.toString());
+    if (clamped > 1) {
+      params.set("page", String(clamped));
+    } else {
+      params.delete("page");
+    }
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ""}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   function handleAddToCart(product: Product) {
     addItem(product);
@@ -125,7 +148,7 @@ function ProductsPageContent() {
         </h1>
         <p className="text-gray-500 text-[15px] max-w-lg">
           {search
-            ? `${products.length} item${products.length === 1 ? "" : "s"} found.`
+            ? `${totalCount} item${totalCount === 1 ? "" : "s"} found.`
             : activeCategoryLabel
             ? `Browse everything we offer under ${activeCategoryLabel}.`
             : "Professional-grade tools and materials for every job. Filter by department to find exactly what you need."}
@@ -154,7 +177,10 @@ function ProductsPageContent() {
         {categories.map((c) => (
           <button
             key={c.value}
-            onClick={() => setCategory(c.value)}
+            onClick={() => {
+              setCategory(c.value);
+              setPage(1);
+            }}
             className={`font-[var(--font-heading)] text-[11.5px] sm:text-[13px] font-semibold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full sm:rounded-none whitespace-nowrap transition-all duration-200 shrink-0 ${
               category === c.value
                 ? "bg-[var(--color-burgundy)] text-white"
@@ -291,6 +317,53 @@ function ProductsPageContent() {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-10">
+          <button
+            onClick={() => goToPage(page - 1)}
+            disabled={page <= 1}
+            className="text-[13px] font-semibold px-3.5 py-2 border border-gray-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--color-brand)] transition-colors"
+            aria-label="Previous page"
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(
+              (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1
+            )
+            .map((p, i, arr) => (
+              <span key={p} className="flex items-center">
+                {i > 0 && arr[i - 1] !== p - 1 && (
+                  <span className="px-1.5 text-gray-300 text-[13px]">…</span>
+                )}
+                <button
+                  onClick={() => goToPage(p)}
+                  className={`text-[13px] font-semibold w-9 h-9 transition-colors ${
+                    p === page
+                      ? "bg-[var(--color-burgundy)] text-white"
+                      : "border border-gray-200 hover:border-[var(--color-brand)]"
+                  }`}
+                  aria-label={`Go to page ${p}`}
+                  aria-current={p === page ? "page" : undefined}
+                >
+                  {p}
+                </button>
+              </span>
+            ))}
+
+          <button
+            onClick={() => goToPage(page + 1)}
+            disabled={page >= totalPages}
+            className="text-[13px] font-semibold px-3.5 py-2 border border-gray-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--color-brand)] transition-colors"
+            aria-label="Next page"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
