@@ -615,6 +615,16 @@ BEGIN
   v_shipping_fee := shipping_fee_for_region(p_shipping_region);
   v_total := v_total + v_shipping_fee;
 
+  -- Security fix: shipping_email used to be stored straight from
+  -- p_shipping_email — client input with no check that it belonged to
+  -- the caller at all. A signed-in user could place any order and set
+  -- it to a third party's address; /api/send-order-confirmation would
+  -- then have this store's own SMTP send that address a real-looking
+  -- "Order Confirmed" email, no different from a spam/phishing relay.
+  -- The checkout flow only ever gets a session by sending an OTP to
+  -- the address it about to store as shipping_email, so for a genuine
+  -- checkout this is always already the same value — nothing legitimate
+  -- changes. p_shipping_email is intentionally no longer used.
   INSERT INTO orders (
     user_id, total, shipping_fee, status,
     shipping_email, shipping_name, shipping_phone,
@@ -622,7 +632,7 @@ BEGIN
   )
   VALUES (
     auth.uid(), v_total, v_shipping_fee, 'pending',
-    p_shipping_email, p_shipping_name, p_shipping_phone,
+    auth.jwt()->>'email', p_shipping_name, p_shipping_phone,
     p_shipping_address, p_shipping_city, p_shipping_region, p_shipping_notes
   )
   RETURNING * INTO v_order;
