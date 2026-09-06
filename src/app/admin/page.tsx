@@ -6,6 +6,12 @@ import type { Product, RecentWorkItem, Capability, HeroContent, Order, OrderItem
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
+// Kept in sync with the storage bucket's own allow-list in
+// supabase/schema.sql ("Admins can upload product images") — see the
+// comment on uploadImage() below for why both layers exist.
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+
 const CATEGORIES = [
   { value: "automated-gates", label: "Automated Gates" },
   { value: "roller-shutters", label: "Garage Roller Shutters" },
@@ -105,10 +111,35 @@ export default function AdminPanel() {
   }, [user]);
 
   async function uploadImage(file: File, folder: string): Promise<string | null> {
+    // Security fix: accept="image/*" on the <input> is only a UI filter —
+    // it does nothing to stop a raw API call (e.g. from someone with a
+    // compromised admin session) from uploading any file type. The real
+    // gate is the storage bucket's own RLS policy (see supabase/schema.sql,
+    // "Admins can upload product images"), which rejects anything outside
+    // this same allow-list server-side regardless of what the client
+    // sends — this check is just to fail fast with a clear message rather
+    // than a raw storage error.
+    //
+    // SVG is deliberately excluded even though browsers treat it as an
+    // image: it can carry a <script> tag that runs if the file URL is
+    // ever opened directly (not inside an <img>, which sandboxes it) —
+    // full HTML/script files obviously excluded for the same reason.
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      alert(`"${file.name}" isn't a supported image type. Use JPG, PNG, WEBP, or GIF.`);
+      return null;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(`"${file.name}" is too large (max ${MAX_IMAGE_BYTES / 1024 / 1024}MB).`);
+      return null;
+    }
+
     const path = `${folder}/${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
-    const { data, error } = await supabase.storage.from("products").upload(path, file);
+    const { data, error } = await supabase.storage
+      .from("products")
+      .upload(path, file, { contentType: file.type });
     if (error) {
       console.error("Upload error:", error);
+      alert(`Failed to upload "${file.name}": ${error.message}`);
       return null;
     }
     const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(data.path);
@@ -386,7 +417,7 @@ function ProductsTab({
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 multiple
                 onChange={(e) => {
                   const files = Array.from(e.target.files ?? []);
@@ -1057,7 +1088,7 @@ function RecentWorkTab({
               <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
                 className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
               />
@@ -1290,7 +1321,7 @@ function CapabilitiesTab({
               <label className="text-[12px] text-gray-500 mb-1 block">Image</label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
                 className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
               />
@@ -1465,7 +1496,7 @@ function HeroTab({
             <label className="text-[12px] text-gray-500 mb-1 block">Background image</label>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => setForm((prev) => ({ ...prev, image_file: e.target.files?.[0] ?? null }))}
               className="w-full px-3 py-2 border rounded text-[14px] cursor-pointer"
             />

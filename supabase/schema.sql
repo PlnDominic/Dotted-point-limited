@@ -181,9 +181,27 @@ CREATE POLICY "Admins list is readable by admins"
 -- Storage — product images
 -- ============================================
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('products', 'products', true)
-ON CONFLICT (id) DO NOTHING;
+-- Security fix: this bucket previously had no file_size_limit or
+-- allowed_mime_types, so the only thing stopping an upload was
+-- is_admin() below — meaning anyone with a valid (or compromised) admin
+-- session could upload an arbitrarily large file of ANY type, including
+-- an .html or .svg with an embedded <script>. Since this bucket is
+-- public, that file would be served back with whatever content-type it
+-- was uploaded with; opening it directly (not inside an <img>, which
+-- sandboxes it) would run that script in the storage subdomain's
+-- origin. Restricting to actual raster image types server-side (not
+-- just the app's client-side check — see uploadImage() in
+-- src/app/admin/page.tsx) closes that off regardless of how the upload
+-- request is made.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'products', 'products', true,
+  5242880, -- 5MB
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO UPDATE SET
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 DROP POLICY IF EXISTS "Product images are publicly readable" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can upload product images" ON storage.objects;
