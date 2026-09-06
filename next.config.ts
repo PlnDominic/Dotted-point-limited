@@ -1,14 +1,30 @@
 import type { NextConfig } from "next";
 
+// Security fix: *.supabase.co matches every Supabase project's storage
+// domain, not just this one — and /_next/image?url=... is a public,
+// unauthenticated endpoint anyone can hit directly with any URL matching
+// an allowed pattern, regardless of what images this app actually
+// renders anywhere. That wildcard let an attacker have this app's own
+// server fetch/process arbitrary content from ANY Supabase project's
+// bucket, not just this site's own. Narrowed to the exact host this
+// project's own images live on, derived from the same URL the app
+// already uses to talk to Supabase (so it can't drift out of sync) —
+// falls back to the wildcard only if that env var isn't set at build
+// time (e.g. running next build locally without it configured).
+const supabaseHostname = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
   images: {
-    // Product/service images live in Supabase Storage. Scoped to
-    // *.supabase.co instead of a bare "**" wildcard — an unrestricted
-    // remote pattern lets Next's image optimizer fetch (server-side)
-    // whatever URL a caller passes it, which is a live SSRF surface the
-    // moment any user-controlled URL reaches next/image.
     remotePatterns: [
-      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: supabaseHostname ?? "*.supabase.co" },
     ],
   },
 
