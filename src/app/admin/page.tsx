@@ -662,13 +662,14 @@ function ProductsTab({
 
 /* ═══════════════════════════ Orders ═══════════════════════════ */
 
-const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered"] as const;
+const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"] as const;
 
 const ORDER_STATUS_STYLES: Record<(typeof ORDER_STATUSES)[number], string> = {
   pending: "bg-yellow-100 text-yellow-700",
   paid: "bg-blue-100 text-blue-700",
   shipped: "bg-purple-100 text-purple-700",
   delivered: "bg-green-100 text-green-700",
+  cancelled: "bg-gray-200 text-gray-600",
 };
 
 type OrderWithItems = Order & {
@@ -704,9 +705,18 @@ function OrdersTab({
 
   async function updateStatus(orderId: string, status: (typeof ORDER_STATUSES)[number]) {
     setUpdatingId(orderId);
-    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+
+    // Cancelling isn't a plain status flip — cancel_order() also restores
+    // the stock place_order() decremented, and enforces that only a
+    // pending/paid order can still be cancelled.
+    const { error } =
+      status === "cancelled"
+        ? await supabase.rpc("cancel_order", { p_order_id: orderId })
+        : await supabase.from("orders").update({ status }).eq("id", orderId);
+
     if (error) {
       console.error(error);
+      alert(error.message);
     } else {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
     }

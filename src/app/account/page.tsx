@@ -11,6 +11,7 @@ export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -44,7 +45,23 @@ export default function AccountPage() {
     paid: "bg-blue-50 text-blue-700 border-blue-200",
     shipped: "bg-purple-50 text-purple-700 border-purple-200",
     delivered: "bg-green-50 text-green-700 border-green-200",
+    cancelled: "bg-gray-100 text-gray-500 border-gray-200",
   };
+
+  async function cancelOrder(orderId: string) {
+    if (!window.confirm("Cancel this order? This can't be undone.")) return;
+
+    setCancellingId(orderId);
+    const { error } = await supabase.rpc("cancel_order", { p_order_id: orderId });
+    if (error) {
+      alert(error.message);
+    } else {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o))
+      );
+    }
+    setCancellingId(null);
+  }
 
   if (loading) {
     return (
@@ -148,6 +165,15 @@ export default function AccountPage() {
                   <span className="font-display text-base tracking-tight">
                     {formatGHS(order.total)}
                   </span>
+                  {(order.status === "pending" || order.status === "paid") && (
+                    <button
+                      onClick={() => cancelOrder(order.id)}
+                      disabled={cancellingId === order.id}
+                      className="text-[11px] text-[var(--fg-muted)] underline hover:text-red-500 transition-colors disabled:opacity-40"
+                    >
+                      {cancellingId === order.id ? "Cancelling..." : "Cancel"}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

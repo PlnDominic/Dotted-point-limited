@@ -714,3 +714,60 @@ $$;
 -- address, so only the service-role key (which bypasses grants) should
 -- ever be able to call it.
 REVOKE ALL ON FUNCTION get_abandoned_carts(INT, INT) FROM PUBLIC;
+
+-- ============================================
+-- Order cancellation
+-- ============================================
+-- The original CHECK constraint (set when orders.status was first
+-- defined above) only allowed pending/paid/shipped/delivered. Widen it
+-- for existing databases — CREATE TABLE IF NOT EXISTS is a no-op once
+-- the table exists, so this ALTER is what actually applies it.
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+ALTER TABLE orders ADD CONSTRAINT orders_status_check
+  CHECK (status IN ('pending', 'paid', 'shipped', 'delivered', 'cancelled'));
+
+-- Cancelling isn't just a status flip: place_order() already decremented
+-- stock, so cancelling has to give it back. SECURITY DEFINER so it can
+-- update products regardless of who's calling, but the ownership/admin
+-- check inside means a customer can still only cancel their own order —
+-- same pattern as place_order().
+--
+-- Only pending/paid orders can be cancelled — once something has
+-- shipped, it needs a real return process, not a status flip.
+CREATE OR REPLACE FUNCTION cancel_order(p_order_id UUID)
+RETURNS orders
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_order orders;
+  v_item RECORD;
+BEGIN
+  SELECT * INTO v_order FROM orders WHERE id = p_order_id;
+
+  IF v_order IS NULL THEN
+    RAISE EXCEPTION 'Order not found';
+  END IF;
+
+  IF v_order.user_id != auth.uid() AND NOT is_admin() THEN
+    RAISE EXCEPTION 'Not authorized to cancel this order';
+  END IF;
+
+  IF v_order.status NOT IN ('pending', 'paid') THEN
+    RAISE EXCEPTION 'Order cannot be cancelled once it has shipped';
+  END IF;
+
+  FOR v_item IN SELECT product_id, quantity FROM order_items WHERE order_id = p_order_id
+  LOOP
+    UPDATE products SET stock = stock + v_item.quantity WHERE id = v_item.product_id;
+  END LOOP;
+
+  UPDATE orders SET status = 'cancelled' WHERE id = p_order_id
+  RETURNING * INTO v_order;
+
+  RETURN v_order;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION cancel_order(UUID) TO authenticated;

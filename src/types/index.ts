@@ -29,7 +29,7 @@ export interface Order {
   user_id: string;
   total: number;
   shipping_fee: number;
-  status: "pending" | "paid" | "shipped" | "delivered";
+  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   created_at: string;
   shipping_name?: string | null;
   shipping_phone?: string | null;
