@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendLowStockAlertEmail } from "@/lib/email";
 import type { Order, OrderItem, Product } from "@/types";
 
 type OrderRow = Order & {
   items: (OrderItem & { product: Product | null })[];
 };
+
+// Orders placed with stock at or below this, after place_order()'s
+// decrement, trigger a low-stock alert to the admin.
+const LOW_STOCK_THRESHOLD = 5;
 
 export async function POST(request: Request) {
   const { orderId } = (await request.json().catch(() => ({}))) as {
@@ -52,6 +56,20 @@ export async function POST(request: Request) {
     shippingCity: order.shipping_city ?? "",
     shippingRegion: order.shipping_region ?? "",
   });
+
+  // Best-effort, same as the confirmation email above — place_order()
+  // already decremented stock, so item.product.stock here reflects the
+  // post-order level. One product can appear once per order, so no
+  // dedup needed.
+  const lowStockItems = order.items
+    .filter((item) => item.product && item.product.stock <= LOW_STOCK_THRESHOLD)
+    .map((item) => ({ name: item.product!.name, stock: item.product!.stock }));
+
+  if (lowStockItems.length > 0) {
+    sendLowStockAlertEmail(lowStockItems).catch((err) =>
+      console.error("Low stock alert email error:", err)
+    );
+  }
 
   return NextResponse.json(result);
 }

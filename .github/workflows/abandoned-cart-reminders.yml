@@ -1,0 +1,22 @@
+name: Abandoned Cart Reminders
+
+# Calls the deployed app's cron endpoint daily, which emails anyone whose
+# cart has sat untouched for 24+ hours (and hasn't been reminded in the
+# last 7 days). See src/app/api/cron/abandoned-carts/route.ts.
+on:
+  schedule:
+    - cron: "0 10 * * *" # Daily at 10:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call abandoned-cart cron endpoint
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://dotted-point-limited.vercel.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sS -f -X POST "$SITE_URL/api/cron/abandoned-carts" \
+            -H "x-cron-secret: $CRON_SECRET" \
+            -H "Content-Type: application/json"

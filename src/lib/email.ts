@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { formatGHS } from "@/lib/currency";
+import { SITE_URL } from "@/lib/site";
 
 type OrderConfirmationItem = {
   name: string;
@@ -17,6 +18,17 @@ type OrderConfirmationInput = {
   shippingAddress: string;
   shippingCity: string;
   shippingRegion: string;
+};
+
+type LowStockItem = {
+  name: string;
+  stock: number;
+};
+
+type AbandonedCartInput = {
+  customerEmail: string;
+  itemCount: number;
+  subtotal: number;
 };
 
 function escapeHtml(value: string): string {
@@ -116,6 +128,107 @@ export async function sendOrderConfirmationEmail(
     return { sent: true };
   } catch (error) {
     console.error("Failed to send order confirmation email:", error);
+    return { sent: false, reason: "send_error" };
+  }
+}
+
+// Sent to the admin (ORDER_NOTIFICATION_EMAIL) right after an order is
+// placed, if any product the order touched dropped to/below the low-stock
+// threshold. There's no separate recipient config — this reuses the same
+// address as the order-confirmation bcc, since that's already "the admin's
+// inbox" by convention here. No-op (not an error) if that env var isn't set.
+export async function sendLowStockAlertEmail(
+  items: LowStockItem[]
+): Promise<{ sent: boolean; reason?: "not_configured" | "no_recipient" | "send_error" }> {
+  const transporter = getTransporter();
+  if (!transporter) return { sent: false, reason: "not_configured" };
+
+  const to = process.env.ORDER_NOTIFICATION_EMAIL;
+  if (!to) return { sent: false, reason: "no_recipient" };
+
+  const rows = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #eee;">${escapeHtml(item.name)}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">${item.stock}</td>
+        </tr>`
+    )
+    .join("");
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;">
+      <h1 style="font-size:18px;margin-bottom:8px;">Low Stock Alert</h1>
+      <p style="color:#555;font-size:14px;">
+        The following item${items.length === 1 ? " is" : "s are"} running low after a recent order:
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">Product</th>
+            <th style="text-align:right;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">Stock Left</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="color:#999;font-size:12px;margin-top:32px;">
+        Dotted Point Limited &middot; Admin Notification
+      </p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `"Dotted Point Limited" <${process.env.SMTP_USER}>`,
+      to,
+      subject: `Low Stock Alert — ${items.length} item${items.length === 1 ? "" : "s"}`,
+      html,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("Failed to send low stock alert email:", error);
+    return { sent: false, reason: "send_error" };
+  }
+}
+
+// Sent to a customer who added items to their cart but never checked out,
+// by the abandoned-cart cron job (see /api/cron/abandoned-carts).
+export async function sendAbandonedCartEmail(
+  input: AbandonedCartInput
+): Promise<{ sent: boolean; reason?: "not_configured" | "send_error" }> {
+  const transporter = getTransporter();
+  if (!transporter) return { sent: false, reason: "not_configured" };
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;">
+      <h1 style="font-size:20px;margin-bottom:8px;">You left something behind</h1>
+      <p style="color:#555;font-size:14px;">
+        You have ${input.itemCount} item${input.itemCount === 1 ? "" : "s"}
+        (${formatGHS(input.subtotal)}) waiting in your cart. Come back and
+        finish checking out whenever you're ready.
+      </p>
+      <p style="margin:24px 0;">
+        <a
+          href="${SITE_URL}/cart"
+          style="background:#800020;color:#fff;text-decoration:none;padding:12px 24px;font-size:14px;font-weight:bold;display:inline-block;"
+        >View Your Cart</a>
+      </p>
+      <p style="color:#999;font-size:12px;margin-top:32px;">
+        Dotted Point Limited &middot; Accra, Ghana &middot; +233 54 164 4600
+      </p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `"Dotted Point Limited" <${process.env.SMTP_USER}>`,
+      to: input.customerEmail,
+      subject: "Still thinking it over? Your cart is waiting",
+      html,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("Failed to send abandoned cart email:", error);
     return { sent: false, reason: "send_error" };
   }
 }

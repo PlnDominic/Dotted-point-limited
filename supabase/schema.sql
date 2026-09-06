@@ -654,3 +654,63 @@ CREATE POLICY "Admins can view subscribers"
 
 CREATE POLICY "Admins can remove subscribers"
   ON newsletter_subscribers FOR DELETE USING (is_admin());
+
+-- ============================================
+-- Abandoned cart reminders
+-- ============================================
+-- Tracks the last reminder sent per user, so the cron job (see
+-- /api/cron/abandoned-carts) doesn't re-email the same person every run.
+-- Only ever touched by the service-role key (that route's client), which
+-- bypasses RLS entirely — no policies needed, and none are added, so an
+-- anon/authenticated client can't read or write it at all.
+CREATE TABLE IF NOT EXISTS abandoned_cart_emails (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE abandoned_cart_emails ENABLE ROW LEVEL SECURITY;
+
+-- Returns one row per user whose cart has sat untouched for at least
+-- p_hours_old hours and who hasn't been reminded in the last
+-- p_cooldown_hours. SECURITY DEFINER because it needs to read auth.users
+-- for the email address (not otherwise exposed via the API) — that's also
+-- why it's restricted to service_role below, rather than granted to
+-- authenticated like the other SECURITY DEFINER functions in this file.
+CREATE OR REPLACE FUNCTION get_abandoned_carts(
+  p_hours_old INT DEFAULT 24,
+  p_cooldown_hours INT DEFAULT 168 -- 7 days
+)
+RETURNS TABLE (
+  user_id UUID,
+  email TEXT,
+  item_count BIGINT,
+  subtotal DECIMAL(10,2)
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ci.user_id,
+    u.email,
+    COUNT(*)::BIGINT,
+    SUM(ci.quantity * p.price)::DECIMAL(10,2)
+  FROM cart_items ci
+  JOIN products p ON p.id = ci.product_id
+  JOIN auth.users u ON u.id = ci.user_id
+  WHERE ci.created_at <= now() - (p_hours_old || ' hours')::interval
+    AND NOT EXISTS (
+      SELECT 1 FROM abandoned_cart_emails ace
+      WHERE ace.user_id = ci.user_id
+        AND ace.sent_at > now() - (p_cooldown_hours || ' hours')::interval
+    )
+  GROUP BY ci.user_id, u.email;
+END;
+$$;
+
+-- No GRANT to authenticated/anon: this reads every cart owner's email
+-- address, so only the service-role key (which bypasses grants) should
+-- ever be able to call it.
+REVOKE ALL ON FUNCTION get_abandoned_carts(INT, INT) FROM PUBLIC;

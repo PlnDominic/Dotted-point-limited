@@ -67,7 +67,7 @@ const EMPTY_CAPABILITY_FORM = {
   description: "",
 };
 
-type Tab = "products" | "orders" | "recent-work" | "capabilities" | "hero" | "subscribers" | "delivery-fees";
+type Tab = "products" | "orders" | "analytics" | "recent-work" | "capabilities" | "hero" | "subscribers" | "delivery-fees";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<User | null>(null);
@@ -150,6 +150,7 @@ export default function AdminPanel() {
   const TABS: { value: Tab; label: string }[] = [
     { value: "products", label: "Products" },
     { value: "orders", label: "Orders" },
+    { value: "analytics", label: "Analytics" },
     { value: "recent-work", label: "Recent Work" },
     { value: "capabilities", label: "What We Do Best" },
     { value: "hero", label: "Homepage Hero" },
@@ -200,6 +201,7 @@ export default function AdminPanel() {
       <main className="max-w-[1300px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {tab === "products" && <ProductsTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "orders" && <OrdersTab supabase={supabase} />}
+        {tab === "analytics" && <AnalyticsTab supabase={supabase} />}
         {tab === "recent-work" && <RecentWorkTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "capabilities" && <CapabilitiesTab supabase={supabase} uploadImage={uploadImage} />}
         {tab === "hero" && <HeroTab supabase={supabase} uploadImage={uploadImage} />}
@@ -1754,6 +1756,226 @@ function DeliveryFeesTab({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════ Analytics ═══════════════════════════ */
+
+const CHART_COLOR = "var(--color-burgundy)";
+const DAILY_SALES_DAYS = 14;
+
+function AnalyticsTab({
+  supabase,
+}: {
+  supabase: ReturnType<typeof createClient>;
+}) {
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("orders")
+      .select("*, items:order_items(*, product:products(*))")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error(error);
+        else setOrders((data as OrderWithItems[]) ?? []);
+        setLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (loading) return <p className="text-gray-400 text-[14px]">Loading...</p>;
+
+  if (orders.length === 0) {
+    return <p className="text-gray-500 text-[14px] py-12 text-center">No orders yet.</p>;
+  }
+
+  const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
+  const itemsSold = orders.reduce(
+    (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+    0
+  );
+  const avgOrderValue = totalSales / orders.length;
+
+  // Sales per day for the last DAILY_SALES_DAYS calendar days (local time),
+  // oldest first, so the chart reads left-to-right as time moving forward.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayKeys: string[] = [];
+  const salesByDay = new Map<string, number>();
+  for (let i = DAILY_SALES_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    dayKeys.push(key);
+    salesByDay.set(key, 0);
+  }
+  for (const order of orders) {
+    const key = order.created_at.slice(0, 10);
+    if (salesByDay.has(key)) {
+      salesByDay.set(key, salesByDay.get(key)! + order.total);
+    }
+  }
+  const dailySales = dayKeys.map((key) => ({ key, total: salesByDay.get(key) ?? 0 }));
+  const maxDaily = Math.max(1, ...dailySales.map((d) => d.total));
+
+  // Top 5 products by revenue across all orders.
+  const revenueByProduct = new Map<string, { name: string; revenue: number; qty: number }>();
+  for (const order of orders) {
+    for (const item of order.items) {
+      const key = item.product_id;
+      const name = item.product?.name ?? "Deleted product";
+      const entry = revenueByProduct.get(key) ?? { name, revenue: 0, qty: 0 };
+      entry.revenue += item.price * item.quantity;
+      entry.qty += item.quantity;
+      revenueByProduct.set(key, entry);
+    }
+  }
+  const topProducts = [...revenueByProduct.values()]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+  const maxProductRevenue = Math.max(1, ...topProducts.map((p) => p.revenue));
+
+  const statusCounts = ORDER_STATUSES.reduce(
+    (acc, s) => ({ ...acc, [s]: orders.filter((o) => o.status === s).length }),
+    {} as Record<(typeof ORDER_STATUSES)[number], number>
+  );
+
+  const tiles = [
+    { label: "Total Sales", value: `GH₵${totalSales.toFixed(2)}` },
+    { label: "Orders", value: String(orders.length) },
+    { label: "Avg Order Value", value: `GH₵${avgOrderValue.toFixed(2)}` },
+    { label: "Items Sold", value: String(itemsSold) },
+  ];
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="font-[var(--font-heading)] text-[24px] text-[#1a1a1a]">
+          Analytics
+        </h2>
+        <p className="text-[13px] text-gray-500">
+          Across all {orders.length} order{orders.length === 1 ? "" : "s"} ever placed.
+        </p>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {tiles.map((t) => (
+          <div key={t.label} className="bg-white border border-gray-100 rounded-xl p-4">
+            <p className="text-[11px] text-gray-500 uppercase tracking-[0.06em] mb-1">
+              {t.label}
+            </p>
+            <p className="font-[var(--font-heading)] text-[20px] font-bold text-[#1a1a1a]">
+              {t.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Sales over time */}
+      <div className="bg-white border border-gray-100 rounded-xl p-5 mb-8">
+        <h3 className="text-[13px] font-semibold text-gray-700 mb-4">
+          Sales — Last {DAILY_SALES_DAYS} Days
+        </h3>
+        <div className="flex items-end gap-1.5 h-40 overflow-x-auto">
+          {dailySales.map((d, i) => {
+            const heightPct = Math.max(2, (d.total / maxDaily) * 100);
+            const isHovered = hoveredDay === i;
+            const date = new Date(d.key + "T00:00:00");
+            return (
+              <div
+                key={d.key}
+                className="relative flex-1 min-w-[14px] h-full flex items-end"
+                onMouseEnter={() => setHoveredDay(i)}
+                onMouseLeave={() => setHoveredDay((h) => (h === i ? null : h))}
+              >
+                {isHovered && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap bg-[#1a1a1a] text-white text-[11px] rounded px-2 py-1 z-10">
+                    {date.toLocaleDateString("en-GH", { month: "short", day: "numeric" })}
+                    {" · "}GH₵{d.total.toFixed(2)}
+                  </div>
+                )}
+                <div
+                  style={{
+                    height: `${heightPct}%`,
+                    backgroundColor: CHART_COLOR,
+                    opacity: isHovered ? 1 : 0.75,
+                  }}
+                  className="w-full rounded-t-sm transition-opacity"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Top products */}
+        <div className="bg-white border border-gray-100 rounded-xl p-5">
+          <h3 className="text-[13px] font-semibold text-gray-700 mb-4">
+            Top Products by Revenue
+          </h3>
+          {topProducts.length === 0 ? (
+            <p className="text-gray-400 text-[13px]">No items sold yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {topProducts.map((p) => (
+                <div key={p.name}>
+                  <div className="flex items-center justify-between text-[13px] mb-1">
+                    <span className="truncate pr-2">{p.name}</span>
+                    <span className="font-semibold shrink-0">
+                      GH₵{p.revenue.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      style={{
+                        width: `${(p.revenue / maxProductRevenue) * 100}%`,
+                        backgroundColor: CHART_COLOR,
+                      }}
+                      className="h-full rounded-full"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Orders by status */}
+        <div className="bg-white border border-gray-100 rounded-xl p-5">
+          <h3 className="text-[13px] font-semibold text-gray-700 mb-4">
+            Orders by Status
+          </h3>
+          <div className="space-y-3">
+            {ORDER_STATUSES.map((s) => (
+              <div key={s} className="flex items-center gap-3">
+                <span
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 w-20 text-center ${ORDER_STATUS_STYLES[s]}`}
+                >
+                  {s}
+                </span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    style={{
+                      width: `${(statusCounts[s] / orders.length) * 100}%`,
+                      backgroundColor: CHART_COLOR,
+                    }}
+                    className="h-full rounded-full"
+                  />
+                </div>
+                <span className="text-[13px] font-semibold w-6 text-right shrink-0">
+                  {statusCounts[s]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
