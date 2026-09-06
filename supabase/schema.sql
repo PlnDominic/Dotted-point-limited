@@ -562,6 +562,71 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee DECIMAL(10,2) NOT NULL 
 -- price/total is never trusted), and creates the order, its line items,
 -- and the stock decrement together, atomically, as the authenticated
 -- caller (auth.uid()) — nobody can place an order "as" someone else.
+-- ============================================
+-- Rate limiting
+-- ============================================
+-- Most mutations in this app (place_order, cancel_order, cart/wishlist
+-- inserts, auth) are called directly from the browser to Supabase's own
+-- API — they never pass through this app's own server, so Next.js
+-- middleware or an API-route-level limiter can't see them at all. The
+-- only place a limit can actually be enforced is here, inside the
+-- SECURITY DEFINER functions themselves.
+--
+-- One generic events table + helper, reused per action.
+CREATE TABLE IF NOT EXISTS rate_limit_events (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL,
+  action TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS rate_limit_events_user_action_idx
+  ON rate_limit_events (user_id, action, created_at);
+
+ALTER TABLE rate_limit_events ENABLE ROW LEVEL SECURITY;
+-- No policies: nobody should read or write this directly — only the
+-- SECURITY DEFINER functions below ever touch it (they run as the table
+-- owner, which needs no policy to bypass RLS on its own table the way a
+-- request from anon/authenticated would).
+
+-- Raises an exception (aborting the caller's transaction) if this user
+-- has already performed p_action p_max_count times in the last
+-- p_window_minutes; otherwise records this attempt and returns
+-- normally. Also opportunistically deletes this user+action's
+-- expired rows so the table doesn't grow without bound.
+CREATE OR REPLACE FUNCTION enforce_rate_limit(
+  p_action TEXT,
+  p_max_count INT,
+  p_window_minutes INT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count INT;
+BEGIN
+  DELETE FROM rate_limit_events
+  WHERE user_id = auth.uid() AND action = p_action
+    AND created_at < now() - (p_window_minutes || ' minutes')::interval;
+
+  SELECT COUNT(*) INTO v_count FROM rate_limit_events
+  WHERE user_id = auth.uid() AND action = p_action;
+
+  IF v_count >= p_max_count THEN
+    RAISE EXCEPTION 'Too many attempts — please wait a few minutes and try again.';
+  END IF;
+
+  INSERT INTO rate_limit_events (user_id, action) VALUES (auth.uid(), p_action);
+END;
+$$;
+
+-- No GRANT: only called internally from place_order()/cancel_order()
+-- below, which run as this function's owner — never meant to be called
+-- standalone by anon/authenticated.
+REVOKE ALL ON FUNCTION enforce_rate_limit(TEXT, INT, INT) FROM PUBLIC;
+
 CREATE OR REPLACE FUNCTION place_order(
   p_items JSONB, -- [{ "product_id": "...", "quantity": 2 }, ...]
   p_shipping_email TEXT,
@@ -589,6 +654,11 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
+
+  -- At most 10 orders per 15 minutes per account — generous for a real
+  -- checkout, but stops a loop that would otherwise decrement stock and
+  -- trigger an order-confirmation email on every call.
+  PERFORM enforce_rate_limit('place_order', 10, 15);
 
   IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
     RAISE EXCEPTION 'No items to order';
@@ -803,6 +873,11 @@ BEGIN
     RAISE EXCEPTION 'Order cannot be cancelled once it has shipped';
   END IF;
 
+  -- Same reasoning as place_order()'s limit — cancelling restores stock
+  -- and touches the orders/order_items tables on every call, so an
+  -- uncapped loop is real, if minor, abuse.
+  PERFORM enforce_rate_limit('cancel_order', 10, 15);
+
   FOR v_item IN SELECT product_id, quantity FROM order_items WHERE order_id = p_order_id
   LOOP
     UPDATE products SET stock = stock + v_item.quantity WHERE id = v_item.product_id;
@@ -816,3 +891,65 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION cancel_order(UUID) TO authenticated;
+
+-- ============================================
+-- Resend throttle for order confirmation emails
+-- ============================================
+-- /api/send-order-confirmation is called by the client right after
+-- checkout, but there's nothing stopping it from being called again for
+-- the same order — an order's owner (RLS already bounds it to that) can
+-- otherwise trigger repeated real emails from this store's own SMTP to
+-- whatever address is on the order.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_last_sent_at TIMESTAMPTZ;
+
+-- Returns true (and records now() as the send time) if this order's
+-- confirmation email may be (re)sent — at most once per 5 minutes —
+-- false otherwise. SECURITY DEFINER so it can update orders regardless
+-- of the (non-admin) RLS UPDATE policy, but the ownership check inside
+-- means only the order's own owner or an admin can call it at all.
+CREATE OR REPLACE FUNCTION try_claim_confirmation_send(p_order_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_order orders;
+BEGIN
+  SELECT * INTO v_order FROM orders WHERE id = p_order_id;
+
+  IF v_order IS NULL THEN
+    RETURN false;
+  END IF;
+
+  IF v_order.user_id != auth.uid() AND NOT is_admin() THEN
+    RETURN false;
+  END IF;
+
+  IF v_order.confirmation_last_sent_at IS NOT NULL
+     AND v_order.confirmation_last_sent_at > now() - interval '5 minutes' THEN
+    RETURN false;
+  END IF;
+
+  UPDATE orders SET confirmation_last_sent_at = now() WHERE id = p_order_id;
+  RETURN true;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION try_claim_confirmation_send(UUID) TO authenticated;
+
+-- ============================================
+-- Cron endpoint throttle
+-- ============================================
+-- /api/cron/abandoned-carts is gated by CRON_SECRET, which is the real
+-- control — this is defense in depth against that secret being guessed
+-- or the endpoint hammered, since the job is only ever meant to run
+-- about once a day. Only ever touched by the service-role key (that
+-- route's client), same as abandoned_cart_emails — no RLS policies
+-- needed.
+CREATE TABLE IF NOT EXISTS cron_run_log (
+  job_name TEXT PRIMARY KEY,
+  last_run_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE cron_run_log ENABLE ROW LEVEL SECURITY;

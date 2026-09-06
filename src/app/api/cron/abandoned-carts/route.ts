@@ -58,6 +58,24 @@ export async function POST(request: Request) {
   }
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+  // Defense in depth beyond the secret check above: this job is only ever
+  // meant to run about once a day, so refuse a repeat within the hour —
+  // caps the damage of the secret being guessed/leaked or the endpoint
+  // simply being hammered, without needing anything beyond this table.
+  const { data: lastRun } = await supabase
+    .from("cron_run_log")
+    .select("last_run_at")
+    .eq("job_name", "abandoned-carts")
+    .maybeSingle();
+
+  if (lastRun && new Date(lastRun.last_run_at).getTime() > Date.now() - 55 * 60 * 1000) {
+    return NextResponse.json({ error: "Ran too recently" }, { status: 429 });
+  }
+
+  await supabase
+    .from("cron_run_log")
+    .upsert({ job_name: "abandoned-carts", last_run_at: new Date().toISOString() });
+
   const { data: carts, error } = await supabase.rpc("get_abandoned_carts");
   if (error) {
     console.error("get_abandoned_carts error:", error);

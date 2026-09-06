@@ -41,6 +41,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ sent: false, reason: "no_email" });
   }
 
+  // Rate limit: without this, the order's own owner could call this route
+  // repeatedly and have this store's SMTP send real emails to whatever
+  // address is on the order, over and over. try_claim_confirmation_send()
+  // re-checks ownership itself and only returns true once per 5 minutes
+  // per order — see supabase/schema.sql.
+  const { data: canSend, error: claimError } = await supabase.rpc(
+    "try_claim_confirmation_send",
+    { p_order_id: orderId }
+  );
+  if (claimError) {
+    console.error("try_claim_confirmation_send error:", claimError);
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
+  }
+  if (!canSend) {
+    return NextResponse.json({ sent: false, reason: "rate_limited" }, { status: 429 });
+  }
+
   const result = await sendOrderConfirmationEmail({
     orderId: order.id,
     customerEmail: order.shipping_email,
