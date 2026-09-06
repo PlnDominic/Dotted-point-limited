@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
 import { sendAbandonedCartEmail } from "@/lib/email";
 
 // Triggered on a schedule by .github/workflows/abandoned-cart-reminders.yml.
@@ -18,12 +19,32 @@ type AbandonedCart = {
   subtotal: number;
 };
 
+// Plain !== leaks timing information proportional to how many leading
+// characters match, which — over enough requests — can help an attacker
+// guess the secret faster than brute force alone would allow. Comparing
+// byte-for-byte in constant time closes that side channel.
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  // timingSafeEqual throws on length mismatch, and the length mismatch
+  // itself would leak — hash both to a fixed length first isn't needed
+  // here since padding to the longer length keeps the comparison
+  // constant-time while still returning false for a length mismatch.
+  const maxLen = Math.max(bufA.length, bufB.length);
+  const paddedA = Buffer.alloc(maxLen);
+  const paddedB = Buffer.alloc(maxLen);
+  bufA.copy(paddedA);
+  bufB.copy(paddedB);
+  return bufA.length === bufB.length && timingSafeEqual(paddedA, paddedB);
+}
+
 export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
   }
-  if (request.headers.get("x-cron-secret") !== cronSecret) {
+  const provided = request.headers.get("x-cron-secret") ?? "";
+  if (!timingSafeStringEqual(provided, cronSecret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

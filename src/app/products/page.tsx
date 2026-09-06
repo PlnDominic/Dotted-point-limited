@@ -60,7 +60,13 @@ function ProductsPageContent() {
         query = query.eq("category", category);
       }
       if (search.trim()) {
-        const term = search.trim().replace(/[%_]/g, "");
+        // Strip characters PostgREST's .or() filter syntax treats as
+        // structural (",", "(", ")" separate/nest filter clauses) so a
+        // crafted search string can't restructure the query beyond a
+        // plain substring match on these two columns — both public data
+        // already, but there's no reason to let user input shape the
+        // filter's logic at all.
+        const term = search.trim().replace(/[%_,()]/g, "");
         query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
       }
       const { data, count } = await query;

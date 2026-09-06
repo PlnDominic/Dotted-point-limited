@@ -5,8 +5,19 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Security fix: this page used to also offer public self-signup
+// ("Create Admin Account") right here. Anyone could use it to register
+// an account for an admin's email address before that admin had ever
+// signed up themselves — if Supabase Auth's "Confirm email" setting
+// happened to be off, that handed them a working session under that
+// email with nothing to prove they owned the inbox (is_admin() now
+// requires a confirmed email too, as defense in depth — see
+// supabase/schema.sql — but there's no reason to leave a public signup
+// form sitting on the admin login page at all). Admin accounts should
+// be created directly in the Supabase dashboard (Authentication →
+// Users → Add user) and the email added to the `admins` table, not
+// self-served here.
 export default function AdminLoginPage() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,10 +30,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } =
-      mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -38,12 +46,10 @@ export default function AdminLoginPage() {
         <div className="mb-10">
           <div className="w-12 h-1 bg-[var(--accent)] mb-6" />
           <h1 className="font-display text-3xl md:text-4xl tracking-tight mb-3">
-            {mode === "signin" ? "Admin Sign In" : "Create Admin Account"}
+            Admin Sign In
           </h1>
           <p className="text-[var(--fg-secondary)]">
-            {mode === "signin"
-              ? "Sign in with your admin email and password."
-              : "Create an account with email and password. Note: you'll only get into the dashboard if this email is on the admin allowlist."}
+            Sign in with your admin email and password.
           </p>
         </div>
 
@@ -86,14 +92,12 @@ export default function AdminLoginPage() {
               minLength={6}
               className="w-full bg-transparent border border-[var(--border)] px-4 py-3 text-[var(--fg-primary)] placeholder:text-[var(--fg-muted)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none transition-colors"
             />
-            {mode === "signin" && (
-              <Link
-                href="/admin/forgot-password"
-                className="block text-right text-xs text-[var(--fg-muted)] hover:text-[var(--fg-primary)] underline mt-2"
-              >
-                Forgot password?
-              </Link>
-            )}
+            <Link
+              href="/admin/forgot-password"
+              className="block text-right text-xs text-[var(--fg-muted)] hover:text-[var(--fg-primary)] underline mt-2"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           {error && (
@@ -107,47 +111,9 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="btn-primary w-full py-4 text-base disabled:opacity-40"
           >
-            {loading
-              ? mode === "signin"
-                ? "Signing In..."
-                : "Creating Account..."
-              : mode === "signin"
-                ? "Sign In"
-                : "Create Account"}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
-
-        <p className="text-center text-sm text-[var(--fg-muted)] mt-8">
-          {mode === "signin" ? (
-            <>
-              Need an admin account?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError("");
-                }}
-                className="text-[var(--fg-primary)] underline hover:no-underline"
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setError("");
-                }}
-                className="text-[var(--fg-primary)] underline hover:no-underline"
-              >
-                Sign in
-              </button>
-            </>
-          )}
-        </p>
       </div>
     </div>
   );

@@ -56,6 +56,18 @@ INSERT INTO admins (email) VALUES
 ON CONFLICT (email) DO NOTHING;
 
 -- Helper: is the current request's JWT an admin?
+--
+-- Security fix: this used to trust auth.jwt()->>'email' alone. That's
+-- fine IF Supabase Auth's "Confirm email" setting is on (it refuses to
+-- issue a session until the address is verified) — but if that project
+-- setting is ever off, or someone doesn't realize it needs to be on,
+-- anyone can sign up at /admin/login with an admin's email address and
+-- immediately get a session carrying that email claim, with nothing to
+-- stop it: is_admin() would return true without them ever having proven
+-- they own that inbox. Requiring auth.users.email_confirmed_at closes
+-- that regardless of the project setting — defense in depth, not a
+-- replacement for keeping "Confirm email" enabled in Supabase Auth
+-- settings, which you should still verify is on.
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -64,7 +76,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   SELECT EXISTS (
-    SELECT 1 FROM admins WHERE email = auth.jwt()->>'email'
+    SELECT 1 FROM admins
+    WHERE email = auth.jwt()->>'email'
+      AND EXISTS (
+        SELECT 1 FROM auth.users
+        WHERE id = auth.uid() AND email_confirmed_at IS NOT NULL
+      )
   );
 $$;
 
