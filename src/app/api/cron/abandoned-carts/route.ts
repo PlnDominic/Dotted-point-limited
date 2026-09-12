@@ -72,15 +72,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ran too recently" }, { status: 429 });
   }
 
+  const { data: carts, error } = await supabase.rpc("get_abandoned_carts");
+  if (error) {
+    // Bug fix: this used to record the cooldown timestamp BEFORE this
+    // call, so a failure here still blocked retries for 55 minutes —
+    // hiding the real error behind a false "Ran too recently" on every
+    // attempt until the cooldown expired. Only record a run as having
+    // happened once it actually got this far. error.message is included
+    // directly (not just logged) so a failure is diagnosable from the
+    // GitHub Actions log alone, without needing DB access to guess at it.
+    console.error("get_abandoned_carts error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch abandoned carts", detail: error.message },
+      { status: 500 }
+    );
+  }
+
   await supabase
     .from("cron_run_log")
     .upsert({ job_name: "abandoned-carts", last_run_at: new Date().toISOString() });
-
-  const { data: carts, error } = await supabase.rpc("get_abandoned_carts");
-  if (error) {
-    console.error("get_abandoned_carts error:", error);
-    return NextResponse.json({ error: "Failed to fetch abandoned carts" }, { status: 500 });
-  }
 
   let sent = 0;
   for (const cart of (carts ?? []) as AbandonedCart[]) {
